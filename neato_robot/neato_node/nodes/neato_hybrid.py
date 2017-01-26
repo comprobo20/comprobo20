@@ -128,7 +128,7 @@ class NeatoNode(object):
             # get motor encoder values
             curr_motor_time = rospy.Time.now()
             try:
-                left, right, left_speed, right_speed = self.robot.getMotors()
+                left, right = self.robot.getMotors()
                 delta_t = (rospy.Time.now() - scan.header.stamp).to_sec()
                 # now update position information
                 # might consider moving curr_motor_time down
@@ -137,9 +137,7 @@ class NeatoNode(object):
 
                 d_left = (left - encoders[0])/1000.0
                 d_right = (right - encoders[1])/1000.0
-                # might consider using speed instead!
-                #print d_left, d_right, left_speed*dt/1000.0, right_speed*dt/1000.0
-                #d_left, d_right = left_speed*dt/1000.0, right_speed*dt/1000.0
+
                 encoders = [left, right]
                 dx = (d_left+d_right)/2
                 dth = (d_right-d_left)/(BASE_WIDTH/1000.0)

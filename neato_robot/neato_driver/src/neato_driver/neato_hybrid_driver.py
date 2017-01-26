@@ -39,6 +39,8 @@ __author__ = "ferguson@cs.albany.edu (Michael Ferguson)"
 import socket
 import time
 import select
+import cPickle as pickle
+import struct
 
 BASE_WIDTH = 248    # millimeters
 MAX_SPEED = 300     # millimeters/second
@@ -192,11 +194,12 @@ class xv11():
         # for now we will rely on the pi to request scans, we will just fetch the sensor packet here
         #self.port.send("getldsscan\r\n")
         try:
-            self.sensor_packet, _ = self.sensor_sock.recvfrom(65536)
-            neato_outputs = self.sensor_packet.split(chr(26))
-            self.response_dict = {resp[:resp.find('\r')]: resp for resp in neato_outputs}
+            sensor_packet, _ = self.sensor_sock.recvfrom(65536)
+            print 'got a sensor packet'
+            self.sensor_dict = pickle.loads(sensor_packet)
         except socket.timeout:
-            self.response_dict = {}
+            self.sensor_dict = {}
+            print "no packet received... not necessarily a problem"
 
     @staticmethod
     def filter_outliers(ranges,intensities):
@@ -222,53 +225,12 @@ class xv11():
         """ Read values of a scan -- call requestScan first! """
         ranges = list()
         intensities = list()
-        if 'getldsscan' not in self.response_dict:
+        if 'ldsscanranges' not in self.sensor_dict:
             #print 'missing scan ranges'
             return ([],[])
+        ranges = struct.unpack('<%sH' % self.sensor_dict['ldsscanranges'][0], self.sensor_dict['ldsscanranges'][1])
+        return ([r/1000.0 for r in ranges], [10.0]*len(ranges))
 
-        try:
-            remainder = ""
-            found_start_token = False
-            line = self.response_dict['getldsscan']
-
-            if line.find('Unknown Cmd') != -1:
-                # something weird happened. bail.
-                pass
-            listing = [s.strip() for s in line.splitlines()]
-
-            for i in range(len(listing)):
-                entry = listing[i]
-                if entry.startswith('AngleInDegrees') and (len(listing)-1>i or line.endswith('\n')):
-                    listing = listing[i+1:]
-                    found_start_token = True
-                    break
-
-            for i in range(len(listing)):
-                entry = listing[i]
-                vals = entry.split(',')
-                try:
-                    a = int(vals[0])
-                    r = int(vals[1])
-                    intensity = int(vals[2])
-                    if len(ranges) > a:
-                        # got a value we thought we lost
-                        ranges[a] = r/1000.0
-                        intensities[a] = intensity
-                    else:
-                        ranges.append(r/1000.0)
-                        intensities.append(intensity)
-                except:
-                    ranges.append(0.0)
-                    intensities.append(0.0)
-                    # should not happen too much... debug if it does
-                    pass
-                if len(ranges) >= 360:
-                    return xv11.filter_outliers(ranges, intensities)
-
-            return xv11.filter_outliers(ranges, intensities)
-        except:
-            return ([],[])        
-        
     def resend_last_motor_command(self):
         if self.last_cmd:
             self.setMotors(self.last_cmd[0], self.last_cmd[1], self.last_cmd[2])
@@ -296,71 +258,18 @@ class xv11():
     def getMotors(self):
         """ Update values for motors in the self.state dictionary.
             Returns current left, right encoder values. """
-        #self.port.send("getmotors\r\n")
-        # for now we will rely on the raspberry pi to request motors by itself
-        if 'getmotors' in self.response_dict:
-            line = self.response_dict['getmotors']
+        if 'motors' in self.sensor_dict:
+            self.state["LeftWheel_PositionInMM"],self.state["RightWheel_PositionInMM"] = \
+                    struct.unpack('<2d', self.sensor_dict['motors'])
 
-            if line.find('Unknown Cmd') != -1:
-                # something weird happened bail
-                raise IOError('Get Motors Failed')
-            listing = [s.strip() for s in line.splitlines()]
-            found_start_token = False
-
-            while len(listing) < 14 or not found_start_token:
-                if not found_start_token:
-                    for i,l in enumerate(listing):
-                        if l.startswith('Parameter,Value'):
-                            found_start_token = True
-                            listing = listing[i+1:]
-                            break
-                if len(listing) >= 14:
-                    break
-            for i in range(len(listing)):
-                try:
-                    values = listing[i].split(',')
-                    self.state[values[0]] = int(values[1])
-                except Exception as inst:
-                    pass
-        else:
-            pass
-#            print "failed to get odometry information"
-        return [self.state["LeftWheel_PositionInMM"],self.state["RightWheel_PositionInMM"],self.state["LeftWheel_Speed"],self.state["RightWheel_Speed"]]
+        return [self.state["LeftWheel_PositionInMM"],self.state["RightWheel_PositionInMM"]]
 
     def getAccel(self):
         """ Update values for motors in the self.state dictionary.
             Returns current left, right encoder values. """
-        #self.port.flushInput()
-        #self.port.send("getaccel\r\n")
-        if 'getaccel' in self.response_dict:
-            line = self.response_dict['getaccel']
-        
-            if line.find('Unknown Cmd') != -1:
-                # something weird happened bail
-                raise IOError('Get Accel Failed')
-            listing = [s.strip() for s in line.splitlines()]
-            found_start_token = False
-
-            while len(listing) < 6 or not found_start_token:
-                if not found_start_token:
-                    for i,l in enumerate(listing):
-                        if l.startswith('Label,Value'):
-                            found_start_token = True
-                            listing = listing[i+1:]
-                            break
-                if len(listing) >= 6:
-                    break
-
-            for i in range(len(listing)):
-                try:
-                    values = listing[i].split(',')
-                    self.state[values[0]] = float(values[1])
-                except Exception as inst:
-                    pass
-        else:
-            pass
-           # print "missing accelerometer values"
-
+        if 'accel' in self.sensor_dict:
+            self.state["PitchInDegrees"], self.state["RollInDegrees"], self.state["XInG"], self.state["YInG"], self.state["ZInG"], self.state["SumInG"] =\
+                struct.unpack('<6f', self.sensor_dict['accel'])
         return [self.state["PitchInDegrees"],
                 self.state["RollInDegrees"],
                 self.state["XInG"],
@@ -390,23 +299,10 @@ class xv11():
         """ Update values for digital sensors in the self.state dictionary. """
         #self.port.send("getdigitalsensors\r\n")
         # for now we will let the raspberry pi request the digital sensors by itself
-        if 'getdigitalsensors' in self.response_dict:
-            line = self.response_dict['getdigitalsensors']
+        if 'digitalsensors' in self.sensor_dict:
+            self.state['LFRONTBIT'],self.state['LSIDEBIT'],self.state['RFRONTBIT'],self.state['RSIDEBIT'] =\
+                struct.unpack('<4d', self.sensor_dict['digitalsensors'])
 
-            if line.find('Unknown Cmd') != -1:
-                # something weird happened bail
-                raise IOError('Get Digital Sensors Failed')
-
-            listing = [s.strip() for s in line.splitlines()]
-            for i in range(len(listing)-1):
-                try:
-                    values = listing[i+1].split(',')
-                    self.state[values[0]] = int(values[1])
-                except:
-                    pass
-        else:
-            pass
-           # print "didn't get digital sensors"
         return [self.state['LFRONTBIT'],self.state['LSIDEBIT'],self.state['RFRONTBIT'],self.state['RSIDEBIT']]
 
     def getCharger(self):
