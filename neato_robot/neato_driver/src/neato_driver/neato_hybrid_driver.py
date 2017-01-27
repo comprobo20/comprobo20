@@ -41,6 +41,8 @@ import time
 import select
 import cPickle as pickle
 import struct
+from os import system
+
 
 BASE_WIDTH = 248    # millimeters
 MAX_SPEED = 300     # millimeters/second
@@ -137,13 +139,13 @@ xv11_charger_info = [ "FuelPercent",
 
 class xv11():
 
-    def __init__(self,port):
+    def __init__(self, port):
+        self.host = port
         self.port = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.port.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         self.port.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 30)
         self.port.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 15)
 
-        #self.port.setblocking(False)
         try:
             self.port.connect((port,7777))
         except socket.error, ex:
@@ -168,12 +170,16 @@ class xv11():
         self.state = {"LeftWheel_PositionInMM": 0, "RightWheel_PositionInMM": 0}
         self.stop_state = True
         # turn things on
-        time.sleep(2)
-        #print self.port.recv(16384)
-        time.sleep(2)
+        time.sleep(4)
         self.setTestMode("on")
         time.sleep(2)
         self.setLDS("on")
+
+    def do_udp_hole_punch(self):
+        """ This should be called once the Raspberry pi is forwarding sensor packets
+            in order to allow UDP traffic to be forwarded from the Olin network or
+            the ethernet to the OLIN-ROBOTICS network """
+        system('hping3 -c 1 -2 -s 7777 -p 7777 ' + self.host)
 
     def exit(self):
         self.setLDS("off")
@@ -200,26 +206,6 @@ class xv11():
         except socket.timeout:
             self.sensor_dict = {}
             print "no packet received... not necessarily a problem"
-
-    @staticmethod
-    def filter_outliers(ranges,intensities):
-        # debug: turn off filtering for now
-        #return (ranges,intensities)
-        if len(ranges) == 0:
-            return (ranges,intensities)
-        # filter out lone detections
-        for i in range(len(ranges)):
-            previous = (i-1)%len(ranges)
-            next = (i+1)%len(ranges)
-            if (ranges[previous] == 0 and ranges[next] == 0) or intensities[i] < 10:
-                ranges[i] = 0.0
-                intensities[i] = 0.0
-        # filter out ranges that are too long or too short
-        for i in range(len(ranges)):
-            if ranges[i] < .2 or ranges[i] > 5.0:
-                ranges[i] = 0.0
-                intensities[i] = 0.0
-        return (ranges,intensities)
 
     def getScanRanges(self):
         """ Read values of a scan -- call requestScan first! """
@@ -277,24 +263,6 @@ class xv11():
                 self.state["ZInG"],
                 self.state["SumInG"]]
 
-
-    def getAnalogSensors(self):
-        print "NOT CURRENTLY SUPPORTED"
-        """ Update values for analog sensors in the self.state dictionary. """
-        self.port.write("getanalogsensors\n")
-        line = self.port.readline()
-        while line.split(",")[0] != "SensorName":
-            try:
-                line = self.port.readline()
-            except:
-                return
-        for i in range(len(xv11_analog_sensors)):
-            try:
-                values = self.port.readline().split(",")
-                self.state[values[0]] = int(values[1])
-            except:
-                pass
-
     def getDigitalSensors(self):
         """ Update values for digital sensors in the self.state dictionary. """
         #self.port.send("getdigitalsensors\r\n")
@@ -317,21 +285,3 @@ class xv11():
                 self.state[values[0]] = int(values[1])
             except:
                 pass
-
-    def setBacklight(self, value):
-        if value > 0:
-            self.port.write("setled backlighton")
-        else:
-            self.port.write("setled backlightoff")
-
-    #SetLED - Sets the specified LED to on,off,blink, or dim. (TestMode Only)
-    #BacklightOn - LCD Backlight On  (mutually exclusive of BacklightOff)
-    #BacklightOff - LCD Backlight Off (mutually exclusive of BacklightOn)
-    #ButtonAmber - Start Button Amber (mutually exclusive of other Button options)
-    #ButtonGreen - Start Button Green (mutually exclusive of other Button options)
-    #LEDRed - Start Red LED (mutually exclusive of other Button options)
-    #LEDGreen - Start Green LED (mutually exclusive of other Button options)
-    #ButtonAmberDim - Start Button Amber Dim (mutually exclusive of other Button options)
-    #ButtonGreenDim - Start Button Green Dim (mutually exclusive of other Button options)
-    #ButtonOff - Start Button Off
-

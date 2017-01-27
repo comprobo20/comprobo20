@@ -102,7 +102,10 @@ class NeatoNode(object):
         # main loop of driver
         r = rospy.Rate(20)
         rospy.sleep(4)
-        #self.robot.requestScan()
+
+        # do UDP hole punching to make sure the sensor data from the robot makes it through
+        self.robot.do_udp_hole_punch()
+
         scan.header.stamp = rospy.Time.now()
         last_motor_time = rospy.Time.now()
         last_set_motor_time = rospy.Time.now()
