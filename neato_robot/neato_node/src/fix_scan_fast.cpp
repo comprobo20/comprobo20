@@ -24,7 +24,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_in)
   scan_mod.scan_time = (float)1.0/5;
   if(!listener_->waitForTransform(
         scan_in->header.frame_id,
-        "/odom",
+        "odom",
         scan_in->header.stamp + ros::Duration().fromSec(scan_mod.ranges.size()*scan_mod.time_increment),
         ros::Duration(1.0))){
      return;
@@ -76,6 +76,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_in)
     sensor_msgs::PointCloud final_cloud;
     projector_->transformLaserScanToPointCloud("/odom",scan_mod,
               final_cloud,*listener_);
+    pub_cloud.publish(final_cloud);
     delete prev_cloud;
     prev_cloud = new sensor_msgs::PointCloud(final_cloud);
   } catch (...) {}
@@ -89,6 +90,7 @@ int main(int argc, char** argv){
   ros::NodeHandle node;
   ros::Subscriber sub = node.subscribe("/scan",10,scanCallback);
   pub = node.advertise<sensor_msgs::LaserScan>("/stable_scan",10);
+  pub_cloud = node.advertise<sensor_msgs::PointCloud>("/projected_stable_scan",10);
 
   ros::Rate rate(10.0);
   while (node.ok()){
