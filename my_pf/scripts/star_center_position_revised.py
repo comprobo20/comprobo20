@@ -8,7 +8,7 @@
 import rospy
 # from ar_pose.msg import ARMarkers
 from apriltags_ros.msg import AprilTagDetectionArray
-from tf.transformations import euler_matrix, euler_from_quaternion, rotation_matrix, quaternion_from_matrix, quaternion_from_euler
+from tf.transformations import euler_matrix, euler_from_quaternion, quaternion_matrix, rotation_matrix, quaternion_inverse, quaternion_from_matrix, quaternion_from_euler
 import numpy as np
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
@@ -208,7 +208,21 @@ class MarkerProcessor(object):
             This is necessary so things like move_base can work properly. """
         if not(hasattr(self,'translation') and hasattr(self,'rotation')):
             return
-        self.tf_broadcaster.sendTransform(self.translation, self.rotation, rospy.get_rostime(), self.odom_frame_name, "STAR")
+        print "rotation", self.rotation
+        self.inverted_rotation = quaternion_inverse(self.rotation)
+
+        translation = np.zeros((4,1))
+        translation[0] = -self.translation[0]
+        translation[1] = -self.translation[1]
+        translation[2] = -self.translation[2]
+        translation[3] = 1.0
+
+        transformed_translation = quaternion_matrix(self.inverted_rotation).dot(translation)
+
+        print "inverted rotation", self.inverted_rotation
+        print "transformed translation", transformed_translation
+        #self.tf_broadcaster.sendTransform(self.translation, self.rotation, rospy.get_rostime(), self.odom_frame_name, "STAR")
+        self.tf_broadcaster.sendTransform(transformed_translation[:-1], self.inverted_rotation, rospy.get_rostime(), "STAR", self.odom_frame_name)
 
     def run(self):
         r = rospy.Rate(10)
