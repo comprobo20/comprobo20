@@ -49,7 +49,7 @@ class SimpleParticleFilter(object):
         self.last_scan = msg
 
     def process_true_position(self, msg):
-        """ This topic is only available when workign with the
+        """ This topic is only available when working with the
             simulator """
         self.true_position = msg.data
 

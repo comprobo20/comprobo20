@@ -13,6 +13,7 @@ class NeatoBridge(object):
 
         rospy.Subscriber('/odom', Odometry, self.process_odom)
         self.pub_odom = rospy.Publisher('/simple_odom', OdometrySimple, queue_size=10)
+        self.last_odom = None
 
     def process_scan(self, msg):
         self.pub.publish(LaserSimple(north_laser=msg.ranges[0],
@@ -21,8 +22,12 @@ class NeatoBridge(object):
                                      west_laser=msg.ranges[90]))
 
     def process_odom(self,msg):
-        self.pub_odom.publish(OdometrySimple(south_to_north_position=msg.pose.pose.position.x,
-                                             west_to_east_position=msg.pose.pose.position.y))
+        if (self.last_odom == None or
+            abs(self.last_odom[0] - msg.pose.pose.position.x)>0.1 or
+            abs(self.last_odom[1] - msg.pose.pose.position.y)>0.1):
+            self.pub_odom.publish(OdometrySimple(south_to_north_position=msg.pose.pose.position.x,
+                                                 west_to_east_position=msg.pose.pose.position.y))
+            self.last_odom = (msg.pose.pose.position.x, msg.pose.pose.position.y)
 
     def run(self):
         r = rospy.Rate(5)
