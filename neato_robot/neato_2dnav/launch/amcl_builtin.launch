@@ -1,7 +1,7 @@
 <launch>
   <!-- Map server -->
   <arg name="map_file"/>
-  <arg name="scan_topic" default="scan"/>
+  <arg name="scan_topic" default="stable_scan"/>
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
 
   <!-- Localization -->
@@ -14,5 +14,4 @@
     <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
     <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
   </include>
-  <include file="$(find neato_2dnav)/launch/move_base.launch"/>
 </launch>
