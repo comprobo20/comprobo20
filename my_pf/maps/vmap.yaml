@@ -1,6 +1,0 @@
-free_thresh: 0.196
-image: vmap.pgm
-negate: 0
-occupied_thresh: 0.65
-origin: [-3.025948879482009, -3.733106255456736, 0.0]
-resolution: 0.02
