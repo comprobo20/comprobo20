@@ -1,0 +1,9 @@
+<launch>
+  <arg name="bag_name" default="ground_truth"/>
+  <include file="$(find neato_2dnav)/launch/gmapping_demo.launch"/>
+
+  <node pkg="my_pf" type="map_shifter.py" name="map_shifter"/>
+  <node pkg="my_pf" type="topic_remapper.py" name="topic_remapper"/>
+
+  <node pkg="rosbag" type="record" name="recorder" args="bump odom stable_scan scan accel transformed_map projected_stable_scan rosout rosout_agg cmd_vel tf tf_static map_pose map_pose_continuous -o $(arg bag_name)"/>
+</launch>
