@@ -247,8 +247,8 @@ class xv11():
         if 'motors' in self.sensor_dict:
             self.state["LeftWheel_PositionInMM"],self.state["RightWheel_PositionInMM"] = \
                     struct.unpack('<2d', self.sensor_dict['motors'])
-
-        return [self.state["LeftWheel_PositionInMM"],self.state["RightWheel_PositionInMM"]]
+            return [self.state["LeftWheel_PositionInMM"],self.state["RightWheel_PositionInMM"]]
+        return None
 
     def getAccel(self):
         """ Update values for motors in the self.state dictionary.
@@ -256,12 +256,13 @@ class xv11():
         if 'accel' in self.sensor_dict:
             self.state["PitchInDegrees"], self.state["RollInDegrees"], self.state["XInG"], self.state["YInG"], self.state["ZInG"], self.state["SumInG"] =\
                 struct.unpack('<6f', self.sensor_dict['accel'])
-        return [self.state["PitchInDegrees"],
-                self.state["RollInDegrees"],
-                self.state["XInG"],
-                self.state["YInG"],
-                self.state["ZInG"],
-                self.state["SumInG"]]
+            return [self.state["PitchInDegrees"],
+                    self.state["RollInDegrees"],
+                    self.state["XInG"],
+                    self.state["YInG"],
+                    self.state["ZInG"],
+                    self.state["SumInG"]]
+        return None
 
     def getDigitalSensors(self):
         """ Update values for digital sensors in the self.state dictionary. """
@@ -271,7 +272,8 @@ class xv11():
             self.state['LFRONTBIT'],self.state['LSIDEBIT'],self.state['RFRONTBIT'],self.state['RSIDEBIT'] =\
                 struct.unpack('<4d', self.sensor_dict['digitalsensors'])
 
-        return [self.state['LFRONTBIT'],self.state['LSIDEBIT'],self.state['RFRONTBIT'],self.state['RSIDEBIT']]
+            return [self.state['LFRONTBIT'],self.state['LSIDEBIT'],self.state['RFRONTBIT'],self.state['RSIDEBIT']]
+        return None
 
     def getCharger(self):
         """ Update values for charger/battery related info in self.state dictionary. """

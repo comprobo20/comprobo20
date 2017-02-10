@@ -55,6 +55,7 @@ from neato_node.msg import Bump, Accel
 from tf.broadcaster import TransformBroadcaster
 import numpy as np
 import threading
+from copy import copy
 
 from neato_driver.neato_hybrid_driver import xv11, BASE_WIDTH, MAX_SPEED
 
@@ -80,7 +81,8 @@ class NeatoNode(object):
         self.cmd_vel = None
         self.cmd_vel_lock = threading.Lock()
 
-    def spin(self):        
+    def spin(self):
+        old_ranges = None
         encoders = [0,0]
 
         self.x = 0                  # position in xy plane
@@ -116,7 +118,6 @@ class NeatoNode(object):
             new_stamp = rospy.Time.now()
             delta_t = (new_stamp - scan.header.stamp).to_sec()
             scan.header.stamp = new_stamp
-
             (scan.ranges, scan.intensities) = self.robot.getScanRanges()
 
             # repeat last measurement to simulate -pi to pi (instead of -pi to pi - pi/180)
@@ -124,6 +125,10 @@ class NeatoNode(object):
             if len(scan.ranges):
                 scan.ranges.append(scan.ranges[0])
                 scan.intensities.append(scan.intensities[0])
+                if old_ranges == scan.ranges:
+                    scan.ranges, scan.intensities = [], []
+                else:
+                    old_ranges = copy(scan.ranges)
 
             if delta_t-0.2 > 0.1:
                 print "Iteration took longer than expected (should be 0.2) ", delta_t
@@ -131,52 +136,55 @@ class NeatoNode(object):
             # get motor encoder values
             curr_motor_time = rospy.Time.now()
             try:
-                left, right = self.robot.getMotors()
-                delta_t = (rospy.Time.now() - scan.header.stamp).to_sec()
-                # now update position information
-                # might consider moving curr_motor_time down
-                dt = (curr_motor_time - last_motor_time).to_sec()
-                last_motor_time = curr_motor_time
+                motors = self.robot.getMotors()
+                if motors:
+                    # unpack the motor values since we got them.
+                    left, right = motors
+                    delta_t = (rospy.Time.now() - scan.header.stamp).to_sec()
+                    # now update position information
+                    # might consider moving curr_motor_time down
+                    dt = (curr_motor_time - last_motor_time).to_sec()
+                    last_motor_time = curr_motor_time
 
-                d_left = (left - encoders[0])/1000.0
-                d_right = (right - encoders[1])/1000.0
+                    d_left = (left - encoders[0])/1000.0
+                    d_right = (right - encoders[1])/1000.0
 
-                encoders = [left, right]
-                dx = (d_left+d_right)/2
-                dth = (d_right-d_left)/(BASE_WIDTH/1000.0)
-                total_dth += dth
+                    encoders = [left, right]
+                    dx = (d_left+d_right)/2
+                    dth = (d_right-d_left)/(BASE_WIDTH/1000.0)
+                    total_dth += dth
 
-                x_init = self.x
-                y_init = self.y
-                th_init = self.th
+                    x_init = self.x
+                    y_init = self.y
+                    th_init = self.th
 
-                x = cos(dth)*dx
-                y = -sin(dth)*dx
+                    x = cos(dth)*dx
+                    y = -sin(dth)*dx
 
-                self.x += cos(self.th)*x - sin(self.th)*y
-                self.y += sin(self.th)*x + cos(self.th)*y
-                self.th += dth
+                    self.x += cos(self.th)*x - sin(self.th)*y
+                    self.y += sin(self.th)*x + cos(self.th)*y
+                    self.th += dth
 
-                quaternion = Quaternion()
-                quaternion.z = sin(self.th/2.0)
-                quaternion.w = cos(self.th/2.0)
+                    quaternion = Quaternion()
+                    quaternion.z = sin(self.th/2.0)
+                    quaternion.w = cos(self.th/2.0)
 
-                # prepare odometry
-                odom.header.stamp = curr_motor_time
-                odom.pose.pose.position.x = self.x
-                odom.pose.pose.position.y = self.y
-                odom.pose.pose.position.z = 0
-                odom.pose.pose.orientation = quaternion
-                odom.pose.covariance = [10**-1, 0, 0, 0, 0, 0,
-                                        0, 10**-1, 0, 0, 0, 0,
-                                        0, 0, 10**-1, 0, 0, 0,
-                                        0, 0, 0, 10**5, 0, 0,
-                                        0, 0, 0, 0, 10**5, 0,
-                                        0, 0, 0, 0, 0, 10**5]
-                odom.twist.twist.linear.x = dx/dt
-                odom.twist.twist.angular.z = dth/dt
-                self.odomBroadcaster.sendTransform( (self.x, self.y, 0), (quaternion.x, quaternion.y, quaternion.z, quaternion.w), curr_motor_time, "base_link", "odom" )
-                self.odomPub.publish(odom)
+                    # prepare odometry
+                    odom.header.stamp = curr_motor_time
+                    odom.pose.pose.position.x = self.x
+                    odom.pose.pose.position.y = self.y
+                    odom.pose.pose.position.z = 0
+                    odom.pose.pose.orientation = quaternion
+                    odom.pose.covariance = [10**-1, 0, 0, 0, 0, 0,
+                                            0, 10**-1, 0, 0, 0, 0,
+                                            0, 0, 10**-1, 0, 0, 0,
+                                            0, 0, 0, 10**5, 0, 0,
+                                            0, 0, 0, 0, 10**5, 0,
+                                            0, 0, 0, 0, 0, 10**5]
+                    odom.twist.twist.linear.x = dx/dt
+                    odom.twist.twist.angular.z = dth/dt
+                    self.odomBroadcaster.sendTransform( (self.x, self.y, 0), (quaternion.x, quaternion.y, quaternion.z, quaternion.w), curr_motor_time, "base_link", "odom" )
+                    self.odomPub.publish(odom)
             except Exception as err:
                 print "my error is " + str(err)
             with self.cmd_vel_lock:
@@ -191,13 +199,15 @@ class NeatoNode(object):
 
             try:
                 bump_sensors = self.robot.getDigitalSensors()
-                self.bumpPub.publish(Bump(leftFront=bump_sensors[0],leftSide=bump_sensors[1],rightFront=bump_sensors[2],rightSide=bump_sensors[3]))
+                if bump_sensors:
+                    self.bumpPub.publish(Bump(leftFront=bump_sensors[0],leftSide=bump_sensors[1],rightFront=bump_sensors[2],rightSide=bump_sensors[3]))
             except:
                 print "failed to get bump sensors!"
 
             try:
                 accelerometer = self.robot.getAccel()
-                self.accelPub.publish(Accel(accelXInG=accelerometer[2],accelYInG=accelerometer[3],accelZInG=accelerometer[4]))
+                if accelerometer:
+                    self.accelPub.publish(Accel(accelXInG=accelerometer[2],accelYInG=accelerometer[3],accelZInG=accelerometer[4]))
             except Exception as err:
                 print "failed to get accelerometer!", err
 
