@@ -66,9 +66,10 @@ class NeatoNode(object):
         rospy.init_node('neato')
 
         host = rospy.get_param('~host')
+        use_udp = rospy.get_param('~use_udp', True)
         rospy.loginfo("Connecting to host: %s"%(host))
 
-        self.robot = xv11(host)
+        self.robot = xv11(host, use_udp)
 
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCb)
         self.scanPub = rospy.Publisher('scan', LaserScan, queue_size=10)

@@ -139,15 +139,19 @@ xv11_charger_info = [ "FuelPercent",
 
 class xv11():
 
-    def __init__(self, port):
+    def __init__(self, port, use_udp=True):
+        self.use_udp = use_udp
         self.host = port
         self.port = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.port.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         self.port.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 30)
         self.port.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 15)
+        self.port_file = None
 
         try:
             self.port.connect((port,7777))
+            if not self.use_udp:
+                self.port_file = self.port.makefile("rb")
         except socket.error, ex:
             print ex
         read_sockets, write_sockets, exceptional_sockets = select.select([self.port], [self.port], [])
@@ -159,9 +163,10 @@ class xv11():
         UDP_IP = "0.0.0.0"
         UDP_PORT = 7777
 
-        self.sensor_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-        self.sensor_sock.bind((UDP_IP, UDP_PORT))
-        self.sensor_sock.settimeout(.02)
+        if self.use_udp:
+            self.sensor_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+            self.sensor_sock.bind((UDP_IP, UDP_PORT))
+            self.sensor_sock.settimeout(.02)
         print "CONNECTED!"
 
         #self.port.settimeout(10)
@@ -200,9 +205,11 @@ class xv11():
         # for now we will rely on the pi to request scans, we will just fetch the sensor packet here
         #self.port.send("getldsscan\r\n")
         try:
-            sensor_packet, _ = self.sensor_sock.recvfrom(65536)
+            if self.use_udp:
+                sensor_packet, _ = self.sensor_sock.recvfrom(65536)
+            else:
+                self.sensor_dict = pickle.load(self.port_file)
             print 'got a sensor packet'
-            self.sensor_dict = pickle.loads(sensor_packet)
         except socket.timeout:
             self.sensor_dict = {}
             print "no packet received... not necessarily a problem"

@@ -1,6 +1,7 @@
 <launch>
   <arg name="use_sim_time" value="false"/>
   <arg name="host"/>
+  <arg name="use_udp" default="true"/>
   <arg name="receive_port" default="5000"/>
   <arg name="width" default="640"/>
   <arg name="height" default="480"/>
@@ -8,6 +9,7 @@
 
   <include file="$(find neato_node)/launch/bringup_minimal.launch">
 	<arg name="host" value="$(arg host)"/>
+	<arg name="use_udp" value="$(arg use_udp)"/>
   </include>
   <include file="$(find gscam)/examples/raspi_nodelet_udp.launch">
 	 <arg name="host" value="$(arg host)"/>

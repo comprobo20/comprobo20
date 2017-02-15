@@ -1,5 +1,6 @@
 <launch>
   <arg name="host"/>
+  <arg name="use_udp" default="true"/>
   <arg name="urdf_file" default="$(find xacro)/xacro.py '$(find neato_simulator)/model/neato.urdf.xacro'" />
   <param name="robot_description" command="$(arg urdf_file)" />
   <arg name="use_sim_time" value="false"/>
@@ -8,6 +9,7 @@
 
   <node name="neato" pkg="neato_node" type="neato_hybrid.py" output="screen">
     <param name="host" value="$(arg host)" />
+    <param name="use_udp" value="$(arg use_udp)" />
   </node>
   <node name="scan_stabilizer" pkg="neato_node" type="fix_scan_fast"/>
 </launch>
