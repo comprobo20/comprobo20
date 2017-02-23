@@ -26,19 +26,21 @@ class BallTracker(object):
         rospy.Subscriber(image_topic, Image, self.process_image)
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         cv2.namedWindow('video_window')
-        cv2.waitKey(5)
 
     def process_image(self, msg):
         """ Process image messages from ROS and stash them in an attribute
             called cv_image for subsequent processing """
         self.cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-        print self.cv_image.shape
-        cv2.imshow('video_window', self.cv_image)
 
     def run(self):
         """ The main run loop, in this node it doesn't do anything """
         r = rospy.Rate(5)
         while not rospy.is_shutdown():
+            if not self.cv_image is None:
+                print self.cv_image.shape
+                cv2.imshow('video_window', self.cv_image)
+                cv2.waitKey(5)
+
             # start out not issuing any motor commands
             r.sleep()
 
