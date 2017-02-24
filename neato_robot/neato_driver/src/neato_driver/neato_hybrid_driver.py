@@ -147,6 +147,7 @@ class xv11():
         self.port.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 30)
         self.port.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 15)
         self.port_file = None
+        self.sensor_dict = {}
 
         try:
             self.port.connect((port,7777))
@@ -207,6 +208,7 @@ class xv11():
         try:
             if self.use_udp:
                 sensor_packet, _ = self.sensor_sock.recvfrom(65536)
+                self.sensor_dict = pickle.loads(sensor_packet)
             else:
                 self.sensor_dict = pickle.load(self.port_file)
             print 'got a sensor packet'

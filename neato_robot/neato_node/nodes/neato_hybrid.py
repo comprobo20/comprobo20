@@ -51,7 +51,7 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from neato_node.msg import Bump, Accel
+from neato_node.msg import Bump, Accel, Encoders, WheelVelocities
 from tf.broadcaster import TransformBroadcaster
 import numpy as np
 import threading
@@ -71,11 +71,14 @@ class NeatoNode(object):
 
         self.robot = xv11(host, use_udp)
 
-        rospy.Subscriber("cmd_vel", Twist, self.cmdVelCb)
+        rospy.Subscriber('cmd_vel', Twist, self.cmdVelCb)
+        rospy.Subscriber('raw_vel', WheelVelocities, self.rawVelCb)
+
         self.scanPub = rospy.Publisher('scan', LaserScan, queue_size=10)
         self.odomPub = rospy.Publisher('odom',Odometry, queue_size=10)
         self.bumpPub = rospy.Publisher('bump',Bump, queue_size=10)
         self.accelPub = rospy.Publisher('accel',Accel, queue_size=10)
+        self.encodersPub = rospy.Publisher('encoders', Encoders, queue_size=10)
 
         self.odomBroadcaster = TransformBroadcaster()
 
@@ -146,6 +149,8 @@ class NeatoNode(object):
                     # might consider moving curr_motor_time down
                     dt = (curr_motor_time - last_motor_time).to_sec()
                     last_motor_time = curr_motor_time
+
+                    self.encodersPub.publish(Encoders(metersTraveled=[left/1000.0, right/1000.0]))
 
                     d_left = (left - encoders[0])/1000.0
                     d_right = (right - encoders[1])/1000.0
@@ -228,6 +233,10 @@ class NeatoNode(object):
         with self.cmd_vel_lock:
             self.cmd_vel = [ int(x-th) , int(x+th) ]
         #print self.cmd_vel, "SENDING THIS VEL"
+
+    def rawVelCb(self, msg):
+        if len(msg.metersPerSecond) == 2:
+            self.cmd_vel = [int(1000.0*x) for x in msg.metersPerSecond]
 
 if __name__ == "__main__":
     robot = NeatoNode()

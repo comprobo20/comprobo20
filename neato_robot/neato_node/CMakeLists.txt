@@ -9,7 +9,7 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN_INCLUDE_DIRS})
 
 add_definitions(${EIGEN_DEFINITIONS})
-add_message_files(FILES Bump.msg Accel.msg)
+add_message_files(FILES Bump.msg Accel.msg Encoders.msg WheelVelocities.msg)
 generate_messages(DEPENDENCIES std_msgs)
 
 add_executable(fix_scan_fast src/fix_scan_fast.cpp)
