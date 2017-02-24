@@ -282,7 +282,7 @@ if __name__ == '__main__':
     cv2.createTrackbar('Epipolar Error Threshold', 'UI', 50, 100, set_epipolar_threshold)
 
     while not rospy.is_shutdown():
-        # compute the 3-d cooredinates and scaled depths for visualization
+        # compute the 3-d coordinates and scaled depths for visualization
         compute_depths()
         key = cv2.waitKey(30)
 
