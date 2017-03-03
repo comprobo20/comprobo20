@@ -211,10 +211,10 @@ class xv11():
                 self.sensor_dict = pickle.loads(sensor_packet)
             else:
                 self.sensor_dict = pickle.load(self.port_file)
-            print 'got a sensor packet'
+            #print 'got a sensor packet'
         except socket.timeout:
             self.sensor_dict = {}
-            print "no packet received... not necessarily a problem"
+            #print "no packet received... not necessarily a problem"
 
     def getScanRanges(self):
         """ Read values of a scan -- call requestScan first! """

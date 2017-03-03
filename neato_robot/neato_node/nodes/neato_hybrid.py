@@ -46,12 +46,12 @@ import roslib; roslib.load_manifest("neato_node")
 import rospy
 from math import sin,cos, pi
 
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32MultiArray
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from neato_node.msg import Bump, Accel, Encoders, WheelVelocities
+from neato_node.msg import Bump, Accel
 from tf.broadcaster import TransformBroadcaster
 import numpy as np
 import threading
@@ -72,13 +72,13 @@ class NeatoNode(object):
         self.robot = xv11(host, use_udp)
 
         rospy.Subscriber('cmd_vel', Twist, self.cmdVelCb)
-        rospy.Subscriber('raw_vel', WheelVelocities, self.rawVelCb)
+        rospy.Subscriber('raw_vel', Float32MultiArray, self.rawVelCb)
 
         self.scanPub = rospy.Publisher('scan', LaserScan, queue_size=10)
         self.odomPub = rospy.Publisher('odom',Odometry, queue_size=10)
         self.bumpPub = rospy.Publisher('bump',Bump, queue_size=10)
         self.accelPub = rospy.Publisher('accel',Accel, queue_size=10)
-        self.encodersPub = rospy.Publisher('encoders', Encoders, queue_size=10)
+        self.encodersPub = rospy.Publisher('encoders', Float32MultiArray, queue_size=10)
 
         self.odomBroadcaster = TransformBroadcaster()
 
@@ -150,7 +150,7 @@ class NeatoNode(object):
                     dt = (curr_motor_time - last_motor_time).to_sec()
                     last_motor_time = curr_motor_time
 
-                    self.encodersPub.publish(Encoders(metersTraveled=[left/1000.0, right/1000.0]))
+                    self.encodersPub.publish(Float32MultiArray(data=[left/1000.0, right/1000.0]))
 
                     d_left = (left - encoders[0])/1000.0
                     d_right = (right - encoders[1])/1000.0
@@ -235,8 +235,8 @@ class NeatoNode(object):
         #print self.cmd_vel, "SENDING THIS VEL"
 
     def rawVelCb(self, msg):
-        if len(msg.metersPerSecond) == 2:
-            self.cmd_vel = [int(1000.0*x) for x in msg.metersPerSecond]
+        if len(msg.data) == 2:
+            self.cmd_vel = [int(1000.0*x) for x in msg.data]
 
 if __name__ == "__main__":
     robot = NeatoNode()
