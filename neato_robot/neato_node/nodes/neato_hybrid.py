@@ -46,12 +46,11 @@ import roslib; roslib.load_manifest("neato_node")
 import rospy
 from math import sin,cos, pi
 
-from std_msgs.msg import String, Float32MultiArray
+from std_msgs.msg import String, Float32MultiArray, Int8MultiArray
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from neato_node.msg import Bump, Accel
 from tf.broadcaster import TransformBroadcaster
 import numpy as np
 import threading
@@ -75,9 +74,9 @@ class NeatoNode(object):
         rospy.Subscriber('raw_vel', Float32MultiArray, self.rawVelCb)
 
         self.scanPub = rospy.Publisher('scan', LaserScan, queue_size=10)
-        self.odomPub = rospy.Publisher('odom',Odometry, queue_size=10)
-        self.bumpPub = rospy.Publisher('bump',Bump, queue_size=10)
-        self.accelPub = rospy.Publisher('accel',Accel, queue_size=10)
+        self.odomPub = rospy.Publisher('odom', Odometry, queue_size=10)
+        self.bumpPub = rospy.Publisher('bump', Int8MultiArray, queue_size=10)
+        self.accelPub = rospy.Publisher('accel', Float32MultiArray, queue_size=10)
         self.encodersPub = rospy.Publisher('encoders', Float32MultiArray, queue_size=10)
 
         self.odomBroadcaster = TransformBroadcaster()
@@ -206,14 +205,21 @@ class NeatoNode(object):
             try:
                 bump_sensors = self.robot.getDigitalSensors()
                 if bump_sensors:
-                    self.bumpPub.publish(Bump(leftFront=bump_sensors[0],leftSide=bump_sensors[1],rightFront=bump_sensors[2],rightSide=bump_sensors[3]))
+                    """ Indices of bump_sensors map as follows
+                            0: front left
+                            1: side left
+                            2: front right
+                            3: side right
+                    """
+                    self.bumpPub.publish(Int8MultiArray(data=bump_sensors))
             except:
                 print "failed to get bump sensors!"
 
             try:
                 accelerometer = self.robot.getAccel()
                 if accelerometer:
-                    self.accelPub.publish(Accel(accelXInG=accelerometer[2],accelYInG=accelerometer[3],accelZInG=accelerometer[4]))
+                    # Indices 2, 3, 4 of accelerometer correspond to x, y, and z direction respectively
+                    self.accelPub.publish(Float32MultiArray(data=accelerometer[2:5]))
             except Exception as err:
                 print "failed to get accelerometer!", err
 

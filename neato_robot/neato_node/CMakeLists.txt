@@ -9,8 +9,8 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN_INCLUDE_DIRS})
 
 add_definitions(${EIGEN_DEFINITIONS})
-add_message_files(FILES Bump.msg Accel.msg)
-generate_messages(DEPENDENCIES std_msgs)
+#add_message_files(FILES Bump.msg)
+#generate_messages(DEPENDENCIES std_msgs)
 
 add_executable(fix_scan_fast src/fix_scan_fast.cpp)
 target_link_libraries(fix_scan_fast ${catkin_LIBRARIES})
