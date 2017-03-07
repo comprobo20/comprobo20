@@ -177,6 +177,8 @@ class xv11():
         self.stop_state = True
         # turn things on
         time.sleep(4)
+        self.send_protocol_preference()
+        time.sleep(2)
         self.setTestMode("on")
         time.sleep(2)
         self.setLDS("on")
@@ -196,6 +198,13 @@ class xv11():
 
         self.port.send("testmode " + value + '\n')
         print "SETTING TEST MODE TO",value
+
+    def send_protocol_preference(self):
+        """ Turn tell the server whether or not to use UDP for sensor packets """
+
+        self.port.send("protocolpreference " + str(self.use_udp) + '\n')
+        print "SETTING PROTOCOL to udp", self.use_udp
+
 
     def setLDS(self, value):
         print "setldsrotation " + value + '\n'
