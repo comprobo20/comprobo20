@@ -111,12 +111,19 @@ class NeatoNode(object):
         # do UDP hole punching to make sure the sensor data from the robot makes it through
         self.robot.do_udp_hole_punch()
 
+        self.robot.send_keep_alive()
+        last_keep_alive = time.time()
+
         scan.header.stamp = rospy.Time.now()
         last_motor_time = rospy.Time.now()
         last_set_motor_time = rospy.Time.now()
 
         total_dth = 0.0
         while not rospy.is_shutdown():
+            if time.time() - last_keep_alive > 30.0:
+                self.robot.send_keep_alive()
+                last_keep_alive = time.time()
+            
             self.robot.requestScan()
             new_stamp = rospy.Time.now()
             delta_t = (new_stamp - scan.header.stamp).to_sec()

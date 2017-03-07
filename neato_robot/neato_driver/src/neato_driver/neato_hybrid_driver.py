@@ -200,10 +200,15 @@ class xv11():
         print "SETTING TEST MODE TO",value
 
     def send_protocol_preference(self):
-        """ Turn tell the server whether or not to use UDP for sensor packets """
+        """ Tell the server whether or not to use UDP for sensor packets """
 
         self.port.send("protocolpreference " + str(self.use_udp) + '\n')
         print "SETTING PROTOCOL to udp", self.use_udp
+
+    def send_keep_alive(self):
+        """ Tell the server that we are still alive... basically a noop packet """ 
+
+        self.port.send("keepalive\n")
 
 
     def setLDS(self, value):
