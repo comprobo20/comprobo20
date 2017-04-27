@@ -87,7 +87,7 @@ class NeatoNode(object):
         self.cmd_vel = None
         self.cmd_vel_lock = threading.Lock()
 
-    def handle_reset_odom(self):
+    def handle_reset_odom(self, req):
         self.x = 0                  # position in xy plane
         self.y = 0
         self.th = 0
