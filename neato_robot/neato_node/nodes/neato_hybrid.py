@@ -42,6 +42,7 @@ __author__ = "Paul.Ruvolo@olin.edu (Paul Ruvolo)"
 # NOTE: heavily based on Michael Ferguson's original work
 
 from std_srvs.srv import Empty
+from std_srvs.srv import EmptyResponse 
 
 import time
 import roslib; roslib.load_manifest("neato_node")
@@ -91,6 +92,7 @@ class NeatoNode(object):
         self.x = 0                  # position in xy plane
         self.y = 0
         self.th = 0
+        return EmptyResponse()
 
     def spin(self):
         old_ranges = None
