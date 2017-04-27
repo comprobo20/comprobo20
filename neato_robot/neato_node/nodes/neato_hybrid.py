@@ -41,6 +41,8 @@ ROS node for Neato XV-11 Robot Vacuum.
 __author__ = "Paul.Ruvolo@olin.edu (Paul Ruvolo)"
 # NOTE: heavily based on Michael Ferguson's original work
 
+from std_srvs.srv import Empty
+
 import time
 import roslib; roslib.load_manifest("neato_node")
 import rospy
@@ -69,6 +71,7 @@ class NeatoNode(object):
         rospy.loginfo("Connecting to host: %s"%(host))
 
         self.robot = xv11(host, use_udp)
+        self.s = rospy.Service('reset_odom', Empty, self.handle_reset_odom)
 
         rospy.Subscriber('cmd_vel', Twist, self.cmdVelCb)
         rospy.Subscriber('raw_vel', Float32MultiArray, self.rawVelCb)
@@ -83,6 +86,11 @@ class NeatoNode(object):
 
         self.cmd_vel = None
         self.cmd_vel_lock = threading.Lock()
+
+    def handle_reset_odom(self):
+        self.x = 0                  # position in xy plane
+        self.y = 0
+        self.th = 0
 
     def spin(self):
         old_ranges = None
@@ -123,13 +131,11 @@ class NeatoNode(object):
             if time.time() - last_keep_alive > 30.0:
                 self.robot.send_keep_alive()
                 last_keep_alive = time.time()
-            
             self.robot.requestScan()
             new_stamp = rospy.Time.now()
             delta_t = (new_stamp - scan.header.stamp).to_sec()
             scan.header.stamp = new_stamp
             (scan.ranges, scan.intensities) = self.robot.getScanRanges()
-
             # repeat last measurement to simulate -pi to pi (instead of -pi to pi - pi/180)
             # This is important in order to adhere to ROS conventions regarding laser scanners
             if len(scan.ranges):
