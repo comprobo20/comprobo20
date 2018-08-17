@@ -5,15 +5,19 @@ project(gscam)
 # System Dependencies
 find_package(PkgConfig)
 
-#if(GSTREAMER_VERSION_1_x)
+pkg_check_modules(GSTREAMER QUIET gstreamer-0.10)
+if(NOT GSTREAMER_FOUND)
+  set(GSTREAMER_VERSION_1_x TRUE)
+endif()
+if(GSTREAMER_VERSION_1_x)
   message(STATUS "gst 1.0")
   pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
   pkg_check_modules(GST_APP REQUIRED gstreamer-app-1.0)
-#else()
-#  message(STATUS "gst 0.1")
-#  pkg_check_modules(GSTREAMER REQUIRED gstreamer-0.10)
-#  pkg_check_modules(GST_APP REQUIRED gstreamer-app-0.10)
-#endif()
+else()
+  message(STATUS "gst 0.1")
+  pkg_check_modules(GSTREAMER REQUIRED gstreamer-0.10)
+  pkg_check_modules(GST_APP REQUIRED gstreamer-app-0.10)
+endif()
 
 if(USE_ROSBUILD)
   # Use rosbuild
@@ -99,8 +103,14 @@ else()
     )
 
   install(FILES
-    examples/raspi_nodelet.launch
+    examples/v4l.launch
+    examples/gscam_nodelet.launch
+    examples/nodelet_pipeline.launch
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    )
+
+  install(FILES examples/uncalibrated_parameters.ini
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/examples
     )
 
   # Interim compatibility

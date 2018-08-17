@@ -2,9 +2,54 @@
 Changelog for package gscam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-FORTHCOMING
------------
-* Added experimental GStreamer-1.0 branch support
+1.0.0 (2017-06-13)
+------------------
+* Gstreamer 1 0 support (`#36 <https://github.com/ros-drivers/gscam/issues/36>`_ )
+  * delete unused manifest.xml, rosdep.yaml
+  * use libgstreamer1.0 for lunar
+  * Fixing preproc switches so that the 1.0 branch still builds against 0.1 without the switch flags
+  * Preliminary GStreamer-1.0 support see README for more info
+* Contributors: Jonathan Bohren, Kei Okada
+
+0.2.0 (2017-06-13)
+------------------
+* add ROS Orphaned Package Maintainers to maintainer tag (`#35 <https://github.com/ros-drivers/gscam/issues/35>`_ )
+* gscam_nodelet.h: include scoped_ptr.hpp to compile with boost 1.57
+  When compiling gscam with the currently latest boost version 1.57,
+  it fails with:
+  In file included from [...]/src/gscam_nodelet.cpp:5:0:
+  [...]/include/gscam/gscam_nodelet.h:20:12: error: 'scoped_ptr' in namespace 'boost' does not name a template type
+  boost::scoped_ptr<GSCam> gscam_driver\_;
+  ^
+  [...]/include/gscam/gscam_nodelet.h:21:12: error: 'scoped_ptr' in namespace 'boost' does not name a template type
+  boost::scoped_ptr<boost::thread> stream_thread\_;
+  ^
+  It seems that the dependencies of boost/thread.hpp have changed
+  and boost/scoped_ptr.hpp is not included anymore with
+  boost/thread.hpp. Hence, the scoped_ptr is not defined in the
+  gscam_nodelet header. After scanning quickly through the release
+  notes of version 1.57, the boost bug tracker and a few changesets,
+  I could not find not a hint what has changed in the thread library
+  that gscam must include scoped_ptr itself.
+  This commit simply addresses the compiler error by explicitly
+  adding boost's scoped_ptr header in the gscam_nodelet header.
+  As this commit also compiles with boost version 1.56, the commit
+  is not expected to cause any problems with other build
+  configurations.
+  Signed-off-by: Lukas Bulwahn <lukas.bulwahn@oss.bmw-carit.de>
+* Remove dependency on opencv2 to fix under indigo
+  Packages can no longer depend on opencv2 as of indigo.
+  I've updated the package to depend instead on cv_bridge as suggested by http://wiki.ros.org/indigo/Migration#OpenCV.
+* Install the parameters file refered to in v4l.launch
+* Update package.xml
+* Examples: Added example for OSX (`#15 <https://github.com/ros-drivers/gscam/issues/15>`_)
+  Add a simple launch configuration for OSX. The camera can be selected by
+  changing the default="0" to the appropriate integer.
+* Adding libraries to gscam target
+  Fixes `#13 <https://github.com/ros-drivers/gscam/issues/13>`_, now builds on stricter linkers
+* adding proper depends to catkin package call
+* Update minoru.launch
+* Contributors: CHILI Demo Corner, Jonathan Bohren, Kei Okada, Kenn Sebesta, Lukas Bulwahn, Russell Toris, Lukas Bulwahn
 
 0.1.3 (2013-12-19)
 ------------------
