@@ -1,5 +1,5 @@
 <launch>
-  <arg name="urdf_file" default="$(find xacro)/xacro.py '$(find neato_simulator)/model/neato.urdf.xacro'" />
+	<arg name="urdf_file" default="$(find xacro)/xacro.py '$(find neato_simulator)/model_create/iRobot.urdf.xacro'" />
   <param name="robot_description" command="$(arg urdf_file)" />
   
   <!-- Gazebo model spawner -->
