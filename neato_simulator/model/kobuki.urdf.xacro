@@ -36,7 +36,7 @@
       <visual>
         <geometry>
           <!-- new mesh -->
-          <mesh filename="package://kobuki_description/meshes/main_body.dae" />
+          <mesh filename="package://neato_simulator/meshes/main_body.dae" />
         </geometry>
         <origin xyz="0.001 0 0.05199" rpy="0 0 0"/>
       </visual>
@@ -64,7 +64,7 @@
     <link name="wheel_left_link">
       <visual>
         <geometry>
-          <mesh filename="package://kobuki_description/meshes/wheel.dae"/>
+          <mesh filename="package://neato_simulator/meshes/wheel.dae"/>
         </geometry>
         <origin xyz="0 0 0" rpy="0 0 0"/>
       </visual>
@@ -92,7 +92,7 @@
     <link name="wheel_right_link">
       <visual>
         <geometry>
-          <mesh filename="package://kobuki_description/meshes/wheel.dae"/>
+          <mesh filename="package://neato_simulator/meshes/wheel.dae"/>
         </geometry>
         <origin xyz="0 0 0" rpy="0 0 0"/>
       </visual>
@@ -218,6 +218,9 @@
     <kobuki_sim/>
     <kobuki_bumpers/>
     <kobuki_cliff_sensors/>
+
+
     <kobuki_sim_imu/>
+    
   </xacro:macro>
 </robot>
