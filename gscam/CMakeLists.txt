@@ -5,9 +5,10 @@ project(gscam)
 # System Dependencies
 find_package(PkgConfig)
 
-pkg_check_modules(GSTREAMER QUIET gstreamer-0.10)
+pkg_check_modules(GSTREAMER QUIET gstreamer-1.0)
+set(GSTREAMER_VERSION_1_x TRUE)
 if(NOT GSTREAMER_FOUND)
-  set(GSTREAMER_VERSION_1_x TRUE)
+  set(GSTREAMER_VERSION_1_x FALSE)
 endif()
 if(GSTREAMER_VERSION_1_x)
   message(STATUS "gst 1.0")
