@@ -12,7 +12,7 @@ width = rospy.get_param('~width')
 height = rospy.get_param('~height')
 fps = rospy.get_param('~fps')
 
-video_mode = "-ex sports -awb off -mm matrix -w " + str(width) + " -h " + str(height) + " -fps " + str(fps) + " -b 2000000"
+video_mode = "-vf -ex sports -awb off -mm matrix -w " + str(width) + " -h " + str(height) + " -fps " + str(fps) + " -b 2000000"
 
 port = 10003
 size = 1024
