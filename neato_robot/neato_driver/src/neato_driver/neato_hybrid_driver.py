@@ -185,6 +185,11 @@ class xv11():
         self.setLDS("off")
         self.setTestMode("off")
 
+    def send_keep_alive(self):
+        """ Tell the server that we are still alive... basically a noop packet """
+        self.port.send("keepalive\n")
+
+
     def setTestMode(self, value):
         """ Turn test mode on/off. """
 
