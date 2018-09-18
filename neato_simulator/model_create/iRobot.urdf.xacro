@@ -132,10 +132,14 @@
     
     
     <!-- Laser link and plugin -->
-    <xacro:hokuyo_laser xyz="0 0 ${0.04 + 0.02}" 
+    <xacro:hokuyo_laser xyz="-0.1016 0 0.0889" 
                   rpy="0 0 -3.14159"
                   parent="base_link">
     </xacro:hokuyo_laser>
+    <!--<xacro:hokuyo_laser xyz="0 0 ${0.04 + 0.02}" 
+                  rpy="0 0 -3.14159"
+                  parent="base_link">
+    </xacro:hokuyo_laser>-->
     
     <!--Imu link and plugin-->
     <xacro:imu_sensor xyz="-0.1 0 ${0.04 + 0.01}" 
