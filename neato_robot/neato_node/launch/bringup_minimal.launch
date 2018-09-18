@@ -10,4 +10,16 @@
     <param name="host" value="$(arg host)" />
   </node>
   <node name="scan_stabilizer" pkg="neato_node" type="fix_scan_fast"/>
+  <node name="cloud_inverter" type="pointcloud_to_laserscan_node" pkg="pointcloud_to_laserscan">
+<!-- warning this violates standard ROS conventions (symmetric angle_min and angle_max), so beware of using this directly with mapping packages -->
+    <remap from="cloud_in" to="projected_stable_scan_pc2"/>
+    <remap from="scan" to="extrapolated_scan"/>
+    <param name="angle_min" value="0"/>
+    <param name="angle_max" value="6.28318531"/>
+    <param name="scan_time" value="0.0"/>
+    <param name="range_min" value="0.2"/>
+    <param name="range_max" value="5.0"/>
+    <param name="target_frame" value="base_link"/>
+    <param name="angle_increment" value="0.01745329"/>
+  </node>
 </launch>

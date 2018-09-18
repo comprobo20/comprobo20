@@ -3,12 +3,14 @@
 #include <tf/transform_listener.h>
 #include <laser_geometry/laser_geometry.h>
 #include <math.h>
+#include <sensor_msgs/point_cloud_conversion.h>
 
 laser_geometry::LaserProjection* projector_ = 0;
 tf::TransformListener* listener_ = 0;
 sensor_msgs::PointCloud* prev_cloud = 0;
 ros::Publisher pub;
 ros::Publisher pub_cloud;
+ros::Publisher pub_cloud_pc2;
 
 
 
@@ -38,7 +40,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_in)
     sensor_msgs::PointCloud cloud;
     scan_mod.header.stamp = scan_in->header.stamp - ros::Duration(t_offset_msecs/1000.0);
     try {
-      projector_->transformLaserScanToPointCloud("/odom",scan_mod,
+      projector_->transformLaserScanToPointCloud("odom",scan_mod,
             cloud,*listener_);
       if (prev_cloud == 0) {
         prev_cloud = new sensor_msgs::PointCloud(cloud);
@@ -69,14 +71,19 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_in)
     best_matching_offset = 0;
   }
   scan_mod.header.stamp = scan_in->header.stamp - ros::Duration(best_matching_offset/1000.0);
-  std::cout << "PROCESSED A SCAN!!! " << best_matching_offset << " " << ros::Time::now().toSec() - t_start << std::endl;
   // Do something with cloud.
   pub.publish(scan_mod);
   try {
     sensor_msgs::PointCloud final_cloud;
-    projector_->transformLaserScanToPointCloud("/odom",scan_mod,
+    projector_->transformLaserScanToPointCloud("odom",scan_mod,
               final_cloud,*listener_);
+    std::string error;
+    listener_->getLatestCommonTime("odom", "base_link", final_cloud.header.stamp, &error);
+    final_cloud.header.stamp -= ros::Duration(0.05);		// need some slop
     pub_cloud.publish(final_cloud);
+    sensor_msgs::PointCloud2 final_cloud_pc2;
+    sensor_msgs::convertPointCloudToPointCloud2(final_cloud, final_cloud_pc2);
+    pub_cloud_pc2.publish(final_cloud_pc2);
     delete prev_cloud;
     prev_cloud = new sensor_msgs::PointCloud(final_cloud);
   } catch (...) {}
@@ -91,6 +98,7 @@ int main(int argc, char** argv){
   ros::Subscriber sub = node.subscribe("/scan",10,scanCallback);
   pub = node.advertise<sensor_msgs::LaserScan>("/stable_scan",10);
   pub_cloud = node.advertise<sensor_msgs::PointCloud>("/projected_stable_scan",10);
+  pub_cloud_pc2 = node.advertise<sensor_msgs::PointCloud2>("/projected_stable_scan_pc2",10);
 
   ros::Rate rate(10.0);
   while (node.ok()){
