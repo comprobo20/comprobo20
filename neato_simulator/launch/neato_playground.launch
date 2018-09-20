@@ -1,5 +1,4 @@
 <launch>
-  <arg name="base"      value="kobuki"/>
   <param name="use_sim_time" value="true"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -10,6 +9,7 @@
   
   <include file="$(find neato_simulator)/launch/includes/neato.launch.xml"/>
   
+  <node pkg="topic_tools" type="relay" name="scan_relayer" args="scan stable_scan"/>  
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
     <param name="publish_frequency" type="double" value="30.0" />
   </node>
