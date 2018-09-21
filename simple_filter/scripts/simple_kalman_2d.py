@@ -8,6 +8,8 @@
     z_t = x_t + v_t, v_t ~ N(0, sigma_z_sq)
 """
 
+from __future__ import print_function, division
+
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import rospy
@@ -73,7 +75,7 @@ class SimpleKalmanFilter(object):
 
     def config_callback(self, config, level):
         """ Get the pause_time, movement noise, and measurement noise """
-        print "GOT RECONFIG REQUEST"
+        print("GOT RECONFIG REQUEST")
         self.pause_time = config['pause_time']
         self.world.sigma_m_sq = [[0, 0], [0, config['sigma_m_sq']]]
         self.world.sigma_z_sq = [[config['sigma_z_sq']]]
@@ -114,13 +116,13 @@ class SimpleKalmanFilter(object):
             plt.clf()
             CS = plt.contour(X, Y, Z)
             plt.clabel(CS, fontsize=9)
-            print self.sigma_sq
+            print(self.sigma_sq)
             plt.xlabel('position')
             plt.ylabel('velocity')
             plt.title('Probabity Density')
             plt.show()
         except:
-            print "couldn't make plot"
+            print("couldn't make plot")
 
 if __name__ == '__main__':
     node = SimpleKalmanFilter()
