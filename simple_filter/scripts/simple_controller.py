@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function, division
+
 import rospy
 import cv2
 from simple_filter.msg import VelocitySimple
@@ -14,7 +16,7 @@ class Teleop(object):
         while not rospy.is_shutdown():
             key = cv2.waitKey(10) & 0xFF
             if key != 0xFF:
-                print key
+                print(key)
             if key == 83:
                 self.pub.publish(VelocitySimple(south_to_north_velocity=1))
             elif key == 81:
