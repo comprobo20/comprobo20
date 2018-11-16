@@ -16,13 +16,11 @@ class KeyPointMatcherDemo(object):
         self.im1_file = rospack.get_path('computer_vision_examples') + '/images/' + im1_file
         self.im2_file = rospack.get_path('computer_vision_examples') + '/images/' + im2_file
 
-        # hack to get around OpenCV2 versus OpenCV3 API Changes
-        if cv2.__version__ == '3.1.0-dev':
-            self.detector = cv2.xfeatures2d.SIFT_create()
-            self.extractor = self.detector
-        else:
-            self.detector = cv2.FeatureDetector_create(descriptor_name)
-            self.extractor = cv2.DescriptorExtractor_create(descriptor_name)
+        self.detector = cv2.xfeatures2d.SIFT_create()
+        self.extractor = self.detector
+        # older versions of OpenCV might need these lines instead of the ones above
+        # self.detector = cv2.FeatureDetector_create(descriptor_name)
+        # self.extractor = cv2.DescriptorExtractor_create(descriptor_name)
 
         self.matcher = cv2.BFMatcher()
         self.im = None
