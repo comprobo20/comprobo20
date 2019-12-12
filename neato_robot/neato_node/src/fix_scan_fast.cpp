@@ -98,12 +98,7 @@ int main(int argc, char** argv){
   ros::NodeHandle node;
   ros::Subscriber sub = node.subscribe("/scan",10,scanCallback);
   pub = node.advertise<sensor_msgs::LaserScan>("/stable_scan",10);
-<<<<<<< HEAD
   pub_cloud = node.advertise<sensor_msgs::PointCloud2>("/projected_stable_scan",10);
-=======
-  pub_cloud = node.advertise<sensor_msgs::PointCloud>("/projected_stable_scan",10);
-  pub_cloud_pc2 = node.advertise<sensor_msgs::PointCloud2>("/projected_stable_scan_pc2",10);
->>>>>>> master
 
   ros::Rate rate(10.0);
   while (node.ok()){
