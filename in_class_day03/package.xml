@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>neato_node</name>
+  <name>in_class_day03</name>
   <version>0.0.0</version>
-  <description>The neato_node package</description>
+  <description>The in_class_day03 package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/neato_node</url> -->
+  <!-- <url type="website">http://wiki.ros.org/in_class_day03</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,44 +49,27 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>camera_info_manager</build_depend>
-  <build_depend>cv_bridge</build_depend>
   <build_depend>geometry_msgs</build_depend>
-  <build_depend>image_transport</build_depend>
-  <build_depend>laser_geometry</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>neato_driver</build_depend>
-  <build_depend>roscpp</build_depend>
+  <build_depend>neato_node</build_depend>
   <build_depend>rospy</build_depend>
+  <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>tf</build_depend>
-  <build_export_depend>camera_info_manager</build_export_depend>
-  <build_export_depend>cv_bridge</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
-  <build_export_depend>image_transport</build_export_depend>
-  <build_export_depend>laser_geometry</build_export_depend>
-  <build_export_depend>neato_driver</build_export_depend>
-  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>neato_node</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
-  <build_export_depend>tf</build_export_depend>
-  <exec_depend>camera_info_manager</exec_depend>
-  <exec_depend>cv_bridge</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>image_transport</exec_depend>
-  <exec_depend>laser_geometry</exec_depend>
-  <exec_depend>message_runtime</exec_depend>
-  <exec_depend>neato_driver</exec_depend>
-  <exec_depend>roscpp</exec_depend>
+  <exec_depend>neato_node</exec_depend>
   <exec_depend>rospy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <exec_depend>tf</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
+    <rosdoc config="rosdoc.yaml"/>    
 
   </export>
 </package>

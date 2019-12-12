@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function, division
+
 """ A ROS Node that implements a 1d particle filter """
 
 
@@ -45,7 +47,7 @@ class SimpleParticleFilter(object):
     def process_scan(self, msg):
         """ Process the simple scans coming from the simulator
             or the Neato bridge """
-        print msg
+        print(msg)
         self.last_scan = msg
 
     def process_true_position(self, msg):

@@ -6,7 +6,7 @@
   <!-- General -->
   <xacro:include filename="$(find neato_simulator)/model/common_properties.urdf.xacro"/>
   <!-- Bases -->
-  <xacro:include filename="$(find kobuki_description)/urdf/kobuki.urdf.xacro" />
+  <xacro:include filename="$(find neato_simulator)/model/kobuki.urdf.xacro" />
   <!-- 3D Sensors -->
   <xacro:include filename="$(find neato_simulator)/model/hokuyo.urdf.xacro"/>
 </robot>

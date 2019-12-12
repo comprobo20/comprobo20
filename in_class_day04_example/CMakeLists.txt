@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(neato_node)
+project(in_class_day04_example)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,23 +8,15 @@ project(neato_node)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  camera_info_manager
-  cv_bridge
   geometry_msgs
-  image_transport
-  laser_geometry
-  message_generation
-  message_runtime
-  neato_driver
-  roscpp
   rospy
+  sensor_msgs
   std_msgs
-  tf
+  dynamic_reconfigure
 )
 
-add_definitions(${EIGEN_DEFINITIONS})
-#add_message_files(FILES Bump.msg)
-generate_messages(DEPENDENCIES std_msgs)
+## System dependencies are found with CMake's conventions
+# find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -57,11 +49,11 @@ generate_messages(DEPENDENCIES std_msgs)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-   FILES
-   Bump.msg
-   Accel.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -78,11 +70,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-   DEPENDENCIES
-   geometry_msgs
-   std_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   geometry_msgs#   sensor_msgs#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -99,10 +90,9 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+	cfg/WallApproach.cfg
+ )
 
 ###################################
 ## catkin specific configuration ##
@@ -115,8 +105,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES neato_node
-#  CATKIN_DEPENDS camera_info_manager cv_bridge geometry_msgs image_transport laser_geometry message_generation message_runtime neato_driver roscpp rospy std_msgs tf
+#  LIBRARIES in_class_day04_example
+#  CATKIN_DEPENDS geometry_msgs rospy sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
@@ -133,7 +123,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/neato_node.cpp
+#   src/${PROJECT_NAME}/in_class_day04_example.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -144,10 +134,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/neato_node_node.cpp)
-
-add_executable(fix_scan_fast src/fix_scan_fast.cpp)
-target_link_libraries(fix_scan_fast ${catkin_LIBRARIES})
+# add_executable(${PROJECT_NAME}_node src/in_class_day04_example_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -204,7 +191,7 @@ target_link_libraries(fix_scan_fast ${catkin_LIBRARIES})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_neato_node.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_in_class_day04_example.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

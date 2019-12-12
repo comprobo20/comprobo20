@@ -120,6 +120,8 @@ class NeatoNode(object):
 
         # do UDP hole punching to make sure the sensor data from the robot makes it through
         self.robot.do_udp_hole_punch()
+        self.robot.send_keep_alive()
+        last_keep_alive = time.time()
 
         self.robot.send_keep_alive()
         last_keep_alive = time.time()
