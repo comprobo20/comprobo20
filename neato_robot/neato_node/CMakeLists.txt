@@ -24,7 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_definitions(${EIGEN_DEFINITIONS})
 #add_message_files(FILES Bump.msg)
-generate_messages(DEPENDENCIES std_msgs)
+#generate_messages(DEPENDENCIES std_msgs)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
