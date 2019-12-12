@@ -148,6 +148,8 @@ include_directories(
 
 add_executable(fix_scan_fast src/fix_scan_fast.cpp)
 target_link_libraries(fix_scan_fast ${catkin_LIBRARIES})
+add_executable(scan_to_pc2 src/scan_to_pc2.cpp)
+target_link_libraries(scan_to_pc2 ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
