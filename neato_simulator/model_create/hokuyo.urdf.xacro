@@ -34,7 +34,7 @@
         <gravity>true</gravity>
         <sensor type="ray" name="head_hokuyo_sensor">
 		<pose>0 0 0 0 0 0</pose>
-            <visualize>true</visualize>
+            <visualize>false</visualize>
             <update_rate>5</update_rate>
             <ray>
                 <scan>
