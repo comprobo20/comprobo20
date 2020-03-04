@@ -4,5 +4,7 @@
   
   <!-- Gazebo model spawner -->
   <node name="spawn_neato_model" pkg="gazebo_ros" type="spawn_model"
-        args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base"/>
+	  args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base"/>
+
+  <node name="raw_vel_relay" pkg="neato_simulator" type="raw_vel_relay.py"/>
 </launch>
