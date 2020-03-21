@@ -11,7 +11,9 @@
   <xacro:include filename="$(find neato_description)/urdf/neato_gazebo.urdf.xacro"/>
   
   <!-- neato --> 
-  <xacro:macro name="neato">   
+  <xacro:macro name="neato">
+	  <xacro:property name="camera_link" value="0.05" />
+
     <link name="base_footprint"/>
     <joint name="base_joint" type="fixed">
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -248,7 +250,38 @@
                  izz="0.0001" />
       </inertial>
     </link>
-    
+
+  <joint name="camera_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="-0.1 0 0.25" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+  </joint>
+
+  <!-- Camera -->
+  <link name="camera_link">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+    <box size="${camera_link} ${camera_link} ${camera_link}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+    <box size="${camera_link} ${camera_link} ${camera_link}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
     <neato_sim/>
     
   </xacro:macro>
