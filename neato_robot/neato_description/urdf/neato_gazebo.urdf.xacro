@@ -148,7 +148,7 @@
         <alwaysOn>true</alwaysOn>
       </plugin>
       </gazebo>
-  <!-- disabling camera due to performance problems through Docker
+<xacro:if value="$(arg load_camera)">
   <gazebo reference="camera_link">
     <sensor type="camera" name="camera">
       <update_rate>30.0</update_rate>
@@ -185,6 +185,6 @@
       </plugin>
     </sensor>
   </gazebo>
--->
+</xacro:if>
   </xacro:macro>
 </robot>
