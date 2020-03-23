@@ -9,12 +9,12 @@
     <include>
       <uri>model://ground_plane</uri>
     </include>
-    <!-- Own physics settings to speed up simulation
+    <!-- Own physics settings to speed up simulation -->
     <physics type='ode'>
-      <max_step_size>0.001</max_step_size>
+      <max_step_size>0.002</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>1000</real_time_update_rate>
+      <real_time_update_rate>500</real_time_update_rate>
       <gravity>0 0 -9.8</gravity>
-    </physics>-->
+    </physics>
   </world>
 </sdf>
