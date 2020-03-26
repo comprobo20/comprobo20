@@ -1,0 +1,6 @@
+TODO: automate these
+
+after converting to sdf using xacro and then gz
+Needed to change sdf version to 1.5
+Needed to change robotNamespace to / for each plugin
+Needed to change references to meshes to point to model://mobile_base
