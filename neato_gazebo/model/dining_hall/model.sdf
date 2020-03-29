@@ -8,7 +8,8 @@
        <geometry>
           <mesh>
 		  <uri>model://dining_hall/meshes/dh.stl</uri>
-          </mesh>
+	  <scale>0.1 0.1 0.1</scale>
+	  </mesh>
         </geometry>
         <surface>
           <contact>
@@ -26,6 +27,7 @@
        <geometry>
           <mesh>
 		  <uri>model://dining_hall/meshes/dh.stl</uri>
+	  <scale>0.1 0.1 0.1</scale>
           </mesh>
         </geometry>
       </visual>
