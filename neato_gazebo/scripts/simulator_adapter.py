@@ -54,11 +54,6 @@ class RawVelRelayNode(object):
             self.bumper_pub.publish(
                 Int8MultiArray(data=[0,0,0,0]))
 
-    def spin(self):
-        r = rospy.Rate(5)
-        while not rospy.is_shutdown():
-            r.sleep()
-
 if __name__ == '__main__':
     node = RawVelRelayNode()
-    node.spin()
+    rospy.spin()
