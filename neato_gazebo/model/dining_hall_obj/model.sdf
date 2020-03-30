@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="dining_hall">
+    <static>true</static>
+    <link name="link">
+	    <pose>0 0 0 1.5708 0 0</pose>
+      <collision name="collision">
+       <geometry>
+          <mesh>
+		  <uri>model://dining_hall_obj/meshes/Roblox-Olin.obj</uri>
+	  <scale>0.1 0.1 0.1</scale>
+	  </mesh>
+        </geometry>
+        <surface>
+          <contact>
+             <collide_bitmask>0xffff</collide_bitmask>
+          </contact>
+          <friction>
+            <ode>
+              <mu>100</mu>
+              <mu2>50</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="visual">
+       <geometry>
+          <mesh>
+		  <uri>model://dining_hall_obj/meshes/Roblox-Olin.obj</uri>
+	  <scale>0.1 0.1 0.1</scale>
+	  </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

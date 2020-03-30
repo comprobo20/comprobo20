@@ -5,6 +5,18 @@
     <include>
       <uri>model://sun</uri>
     </include>
+    <light type="point" name="point">
+      <pose>10 -10 6 0 0 0</pose>
+      <diffuse>1 1 1 1</diffuse>
+      <specular>.1 .1 .1 1</specular>
+      <attenuation>
+        <range>300</range>
+        <linear>0.0</linear>
+        <constant>1.0</constant>
+        <quadratic>0.00</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+    </light>
     <!-- A ground plane -->
     <include>
       <uri>model://ground_plane</uri>
@@ -14,7 +26,7 @@
 	    <pose>2 -2.5 2</pose>
     </include>
     <include>
-	    <uri>model://dining_hall</uri>
+	    <uri>model://dining_hall_obj</uri>
 	    <scale>0.1 0.1 0.1</scale>
     </include>
   </world>
