@@ -1,10 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.4">
   <world name="default">
-    <!-- A global light source -->
-    <include>
-      <uri>model://sun</uri>
-    </include>
     <light type="point" name="point">
       <pose>10 -10 6 0 0 0</pose>
       <diffuse>1 1 1 1</diffuse>
