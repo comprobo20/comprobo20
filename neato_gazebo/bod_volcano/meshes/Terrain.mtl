@@ -1,0 +1,30 @@
+newmtl Part1Mtl
+Material Color
+Ka 1 0 0
+Kd 1 0 0
+Ks 0.145098 0 0 
+
+d 1
+
+Ns 0
+
+newmtl Path1Mtl
+Material Color
+Ka 0.103634 0.108711 0.14198
+Kd 0.103634 0.108711 0.14198
+Ks 0.00650253 0.00682109 0.00890857 
+
+d 1
+
+Ns 0
+
+newmtl TerrainSolid
+Material Color
+Ka 0.0717615 0.0780566 0.0134734
+Kd 0.0717615 0.0780566 0.0134734
+Ks 0 0 0 
+
+d 1
+
+Ns 0
+
