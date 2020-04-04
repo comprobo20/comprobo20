@@ -1,11 +1,9 @@
 newmtl Part1Mtl
-Material Color
+Ka 1.0000 0.0000 0.0000
 Kd 1.0000 0.0000 0.0000
-illum 0
-
-d 1
-
-Ns 0
+Ks 1.0000 1.0000 1.0000
+Ns 100
+illum 1
 
 newmtl Path1Mtl
 Material Color

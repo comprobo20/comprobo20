@@ -31,7 +31,7 @@
 	  </mesh>
         </geometry>
       </visual>
-      <visual name="lava">
+      <!-- <visual name="lava">
        <geometry>
           <mesh>
 		  <uri>model://bod_volcano/meshes/JustLava.obj</uri>
@@ -44,7 +44,7 @@
 	    <name>Gazebo/RedGlow</name>
           </script>
         </material>
-      </visual>
+      </visual> -->
     </link>
   </model>
 </sdf>
