@@ -7,8 +7,8 @@
       <collision name="collision">
        <geometry>
           <mesh>
-		  <uri>model://bod_volcano/meshes/Terrain.obj</uri>
-	  <scale>0.0335 0.0335 0.0335</scale>
+	     <uri>model://bod_volcano/meshes/Terrain.obj</uri>
+	     <scale>0.0335 0.0335 0.0335</scale>
 	  </mesh>
         </geometry>
         <surface>
@@ -30,6 +30,20 @@
 	  <scale>0.0335 0.0335 0.0335</scale>
 	  </mesh>
         </geometry>
+      </visual>
+      <visual name="lava">
+       <geometry>
+          <mesh>
+		  <uri>model://bod_volcano/meshes/JustLava.obj</uri>
+	  <scale>0.0335 0.0335 0.0335</scale>
+	  </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+	    <name>Gazebo/RedGlow</name>
+          </script>
+        </material>
       </visual>
     </link>
   </model>
