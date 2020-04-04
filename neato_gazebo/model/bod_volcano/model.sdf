@@ -26,7 +26,7 @@
       <visual name="visual">
        <geometry>
           <mesh>
-		  <uri>model://bod_volcano/meshes/Terrain.obj</uri>
+		  <uri>model://bod_volcano/meshes/BridgeofDoom.obj</uri>
 	  <scale>0.0335 0.0335 0.0335</scale>
 	  </mesh>
         </geometry>
