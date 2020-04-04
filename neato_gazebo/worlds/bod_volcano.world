@@ -11,5 +11,8 @@
     <include>
       <uri>model://bod_volcano</uri>
     </include>
+    <include>
+      <uri>model://bod</uri>
+    </include>
   </world>
 </sdf>
