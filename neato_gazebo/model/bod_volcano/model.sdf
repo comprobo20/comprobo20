@@ -3,11 +3,11 @@
   <model name="bod_volcano">
     <static>true</static>
     <link name="link">
-	<pose>0 0 0 1.5708 0 0</pose>
+	<pose>0 0 0 0 0 0</pose>
       <collision name="collision">
        <geometry>
           <mesh>
-		  <uri>model://bod_volcano/meshes/NoBridge.obj</uri>
+		  <uri>model://bod_volcano/meshes/NoBridge.dae</uri>
 	     <scale>0.0335 0.0335 0.0335</scale>
 	  </mesh>
         </geometry>
@@ -26,7 +26,7 @@
       <visual name="visual">
        <geometry>
           <mesh>
-		  <uri>model://bod_volcano/meshes/NoBridge.obj</uri>
+		  <uri>model://bod_volcano/meshes/NoBridge.dae</uri>
 	  <scale>0.0335 0.0335 0.0335</scale>
 	  </mesh>
         </geometry>
