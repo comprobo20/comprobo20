@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+  <world name="default">
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://mobile_base_with_camera</uri>
+    </include>
+    <include>
+      <uri>model://bod_volcano</uri>
+    </include>
+    <include>
+      <uri>model://bod</uri>
+    </include>
+  </world>
+</sdf>
