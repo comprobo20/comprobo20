@@ -1,8 +1,0 @@
-<!-- Launches Neato Gazebo simulation in an office world -->
-<launch>
-  <!-- start Gazebo with an office world -->
-  <include file="$(find gazebo_ros)/launch/willowgarage_world.launch" />
-  
-  <!-- spawn the robot -->
-  <include file="$(find neato_gazebo)/launch/robot.launch"/>
-</launch>

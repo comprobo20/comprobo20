@@ -79,29 +79,56 @@
     </gazebo>
     
     <gazebo reference="laser_link">
-      <sensor type="ray" name="laser">
-        <always_on>true</always_on>
-        <update_rate>5</update_rate>
-        <ray>
-          <scan>
-            <horizontal>
-              <samples>361</samples>
+      <xacro:if value="$(arg use_gpu_laser)">
+        <sensor type="gpu_ray" name="laser">
+          <always_on>true</always_on>
+          <update_rate>5</update_rate>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>361</samples>
+                <resolution>1</resolution>
+                <min_angle>${-M_PI}</min_angle>
+                <max_angle>${M_PI}</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.1</min>
+              <max>5</max>
               <resolution>1</resolution>
-              <min_angle>${-M_PI}</min_angle>
-              <max_angle>${M_PI}</max_angle>
-            </horizontal>
-          </scan>
-          <range>
-            <min>0.1</min>
-            <max>5</max>
-            <resolution>1</resolution>
-          </range>
-        </ray>
-        <plugin name="gazebo_ros_laser_controller" filename="libgazebo_ros_laser.so">
-          <topicName>scan</topicName>
-	  <frameName>laser_link</frameName>
-        </plugin>
-      </sensor>
+            </range>
+          </ray>
+          <plugin name="gazebo_ros_laser_controller" filename="libgazebo_ros_gpu_laser.so">
+            <topicName>scan</topicName>
+	    <frameName>laser_link</frameName>
+          </plugin>
+        </sensor>
+      </xacro:if>
+      <xacro:unless value="$(arg use_gpu_laser)">
+        <sensor type="ray" name="laser">
+          <always_on>true</always_on>
+          <update_rate>5</update_rate>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>361</samples>
+                <resolution>1</resolution>
+                <min_angle>${-M_PI}</min_angle>
+                <max_angle>${M_PI}</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.1</min>
+              <max>5</max>
+              <resolution>1</resolution>
+            </range>
+          </ray>
+          <plugin name="gazebo_ros_laser_controller" filename="libgazebo_ros_laser.so">
+            <topicName>scan</topicName>
+	    <frameName>laser_link</frameName>
+          </plugin>
+        </sensor>
+      </xacro:unless>
     </gazebo>
 
 

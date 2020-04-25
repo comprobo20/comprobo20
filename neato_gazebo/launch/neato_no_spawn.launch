@@ -3,9 +3,10 @@
   <arg name="robot_name" value="neato_standalone"/>
   <arg name="gui" default="true"/>
   <arg name="load_camera" default="false"/>
+  <arg name="use_gpu_laser" default="false"/>
   <arg name="neato_world" default="bod_no_spawn"/>
   <param name="robot_description"
-        command="$(find xacro)/xacro.py '$(find neato_description)/urdf/neato_standalone.urdf.xacro' load_camera:=false"/>
+        command="$(find xacro)/xacro.py '$(find neato_description)/urdf/neato_standalone.urdf.xacro' load_camera:=false use_gpu_laser:=false"/>
 
   <!-- start Gazebo with an empty world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">

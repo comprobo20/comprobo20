@@ -3,11 +3,13 @@
   <arg name="gui" default="true"/>
   <arg name="load_camera" default="false"/>
   <arg name="use_gpu_laser" default="false"/>
-  <!-- start Gazebo with an gauntlet world -->
+  <arg name="neato_world" default="empty"/>
+  <!-- start Gazebo with an empty world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
    <arg name="gui" value="$(arg gui)"/>
-    <arg name="world_name" value="$(find neato_gazebo)/worlds/gauntlet.world"/>
- </include> 
+    <arg name="world_name" value="$(find neato_gazebo)/worlds/$(arg neato_world).world"/>
+  </include>
+  
   <!-- spawn the robot -->
   <include file="$(find neato_gazebo)/launch/robot.launch">
    <arg name="load_camera" value="$(arg load_camera)"/>
