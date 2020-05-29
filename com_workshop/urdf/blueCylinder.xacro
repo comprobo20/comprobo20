@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="blueCylinder">
 	<xacro:include filename="$(find com_workshop)/urdf/comShapes.xacro" />
-<xacro:blue_cylinder name="base_link" mass="5" radius=".42" length=".05"/>
+<xacro:blue_cylinder/>
 </robot>
