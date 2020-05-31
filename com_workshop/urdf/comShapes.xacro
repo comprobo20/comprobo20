@@ -1,35 +1,40 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="testshape">
-<xacro:macro name="blue_cylinder" params="radius mass length">
-	<link name="base_link">
+<xacro:macro name="blue_cylinder" params="name radius mass length x:=0 y:=0 z:=0">
+	<link name="${name}">
         <visual>
+	    <origin xyz="${x} ${y} ${z}"/>
             <geometry>
 		    <cylinder length="${length}" radius="${radius}"/>
             </geometry>
         </visual>
         <collision>
+	    <origin xyz="${x} ${y} ${z}"/>
             <geometry>
 		    <cylinder length="${length}" radius="${radius}"/>
             </geometry>
     </collision>
     <inertial>
+	    <origin xyz="${x} ${y} ${z}"/>
 	    <mass value="${mass}" />
 	    <!-- http://scienceworld.wolfram.com/physics/MomentofInertiaCylinder.html -->
 	    <inertia ixx="${1/12*mass*length*length + 1/4*mass*radius*radius}" ixy="0.0" ixz="0.0" iyy="${1/12*mass*length*length + 1/4*mass*radius*radius}" iyz="0.0" izz="${1/2*mass*radius*radius}" />
     </inertial>
     </link>
-    <gazebo reference="base_link">
+    <gazebo reference="${name}">
    <material>Gazebo/Blue</material>
  </gazebo>  
 </xacro:macro>
-<xacro:macro name="red_box" params="mass length width height">
-    <link name="base_link">
+<xacro:macro name="red_box" params="name mass length width height x:=0 y:=0 z:=0">
+    <link name="${name}">
         <visual>
-            <geometry>
+		<origin xyz="${x} ${y} ${z}"/>
+		<geometry>
 		    <box size="${length} ${width} ${height}"/>
             </geometry>
         </visual>
         <collision>
+	    <origin xyz="${x} ${y} ${z}"/>
             <geometry>
 		    <box size="${length} ${width} ${height}"/>
             </geometry>
@@ -40,7 +45,7 @@
 	    <inertia ixx="${1/12*mass*(height*height + width*width)}" ixy="0.0" ixz="0.0" iyy="${1/12*mass*(height*height + length*length)}" iyz="0.0" izz="${1/12*mass*(length*length + width*width)}" />
     </inertial>
     </link>
-    <gazebo reference="base_link">
+    <gazebo reference="${name}">
    <material>Gazebo/Red</material>
  </gazebo>  
 </xacro:macro>

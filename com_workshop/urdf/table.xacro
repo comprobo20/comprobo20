@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="testjoint">
+<xacro:include filename="$(find com_workshop)/urdf/comShapes.xacro" />
+
+<xacro:red_box name="stand" mass="100" length="0.1" width="0.1" height="1" z="0.5"/>
+
+<xacro:red_box name="sheet" mass="1" length="1" width="1" height="0.1"/>
+<joint name="fixed2" type="fixed">
+<parent link="stand"/>
+<child link="sheet"/>
+<origin xyz="0 0 1.05"/>
+</joint>
+
+<xacro:blue_cylinder name="weight1" radius="0.1" mass="0.5" length="0.1"/>
+<joint name="fixed3" type="fixed">
+<parent link="stand"/>
+<child link="weight1"/>
+<origin xyz="0.25 0.25 1.15"/>
+</joint>
+
+<xacro:blue_cylinder name="weight2" radius="0.1" mass="50" length="0.1"/>
+<joint name="fixed4" type="fixed">
+<parent link="stand"/>
+<child link="weight2"/>
+<origin xyz="-0.25 -0.25 1.15"/>
+</joint>
+</robot>

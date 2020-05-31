@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="redBox">
+     <xacro:arg name="name" default="base_link" />
      <xacro:arg name="mass" default="5" />
      <xacro:arg name="length" default="1" />
      <xacro:arg name="width" default="1" />
      <xacro:arg name="height" default="1" />
 	<xacro:include filename="$(find com_workshop)/urdf/comShapes.xacro" />
-<xacro:red_box mass="$(arg mass)" length="$(arg length)" width="$(arg width)" height="$(arg height)"/>
+<xacro:red_box name="$(arg name)" mass="$(arg mass)" length="$(arg length)" width="$(arg width)" height="$(arg height)"/>
 </robot>
