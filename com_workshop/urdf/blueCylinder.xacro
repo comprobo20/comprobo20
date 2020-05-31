@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="blueCylinder">
+     <xacro:arg name="radius" default="0.5" />
+     <xacro:arg name="mass" default="5" />
+     <xacro:arg name="length" default="1" />
 	<xacro:include filename="$(find com_workshop)/urdf/comShapes.xacro" />
-<xacro:blue_cylinder/>
+<xacro:blue_cylinder radius="$(arg radius)" mass="$(arg mass)" length="$(arg length)"/>
 </robot>

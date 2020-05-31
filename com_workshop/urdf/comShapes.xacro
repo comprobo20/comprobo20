@@ -1,50 +1,43 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="testshape">
-<xacro:macro name="blue_cylinder">
-     <xacro:arg name="radius" default="0.5" />
-     <xacro:arg name="mass" default="5" />
-     <xacro:arg name="length" default="1" />
+<xacro:macro name="blue_cylinder" params="radius mass length">
 	<link name="base_link">
         <visual>
             <geometry>
-		    <cylinder length="$(arg length)" radius="$(arg radius)"/>
+		    <cylinder length="${length}" radius="${radius}"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-		    <cylinder length="$(arg length)" radius="$(arg radius)"/>
+		    <cylinder length="${length}" radius="${radius}"/>
             </geometry>
     </collision>
     <inertial>
-	    <mass value="$(arg mass)" />
+	    <mass value="{mass}" />
 	    <!-- http://scienceworld.wolfram.com/physics/MomentofInertiaCylinder.html -->
-	    <inertia ixx="${1/12*$(arg mass)*$(arg length)*$(arg length) + 1/4*$(arg mass)*$(arg radius)*$(arg radius)}" ixy="0.0" ixz="0.0" iyy="${1/12*$(arg mass)*$(arg length)*$(arg length) + 1/4*$(arg mass)*$(arg radius)*$(arg radius)}" iyz="0.0" izz="${1/2*$(arg mass)*$(arg radius)*$(arg radius)}" />
+	    <inertia ixx="${1/12*mass*length*length + 1/4*mass*radius*radius}" ixy="0.0" ixz="0.0" iyy="${1/12*mass*length*length + 1/4*mass*radius*radius}" iyz="0.0" izz="${1/2*mass*radius*radius}" />
     </inertial>
     </link>
     <gazebo reference="base_link">
    <material>Gazebo/Blue</material>
  </gazebo>  
 </xacro:macro>
-<xacro:macro name="red_box">
-     <xacro:arg name="mass" default="5" />
-     <xacro:arg name="length" default="1" />
-     <xacro:arg name="width" default="1" />
-     <xacro:arg name="height" default="1" />
+<xacro:macro name="red_box" params="mass length width height">
     <link name="base_link">
         <visual>
             <geometry>
-		    <box size="$(arg length) $(arg width) $(arg height)"/>
+		    <box size="${length} ${width} ${height}"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-		    <box size="$(arg length) $(arg width) $(arg height)"/>
+		    <box size="${length} ${width} ${height}"/>
             </geometry>
     </collision>
     <inertial>
-	    <mass value="$(arg mass)" />
+	    <mass value="${mass}" />
 	    <!-- https://en.wikipedia.org/wiki/List_of_moments_of_inertia#List_of_3D_inertia_tensors  Note: we are using length, width, height where they use width, height, depth -->
-	    <inertia ixx="${1/12*$(arg mass)*($(arg height)*$(arg height) + $(arg width)*$(arg width))}" ixy="0.0" ixz="0.0" iyy="${1/12*$(arg mass)*($(arg height)*$(arg height) + $(arg length)*$(arg length))}" iyz="0.0" izz="${1/12*$(arg mass)*($(arg length)*$(arg length) + $(arg width)*$(arg width))}" />
+	    <inertia ixx="${1/12*mass*(height*height + width*width)}" ixy="0.0" ixz="0.0" iyy="${1/12*mass*(height*height + length*length)}" iyz="0.0" izz="${1/12*mass*(length*length + width*width)}" />
     </inertial>
     </link>
     <gazebo reference="base_link">
