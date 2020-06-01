@@ -31,6 +31,20 @@ end
 
 spawnModel('sheet',xmlwrite(robotElem),0,0,1);
 
+doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
+sdfElem = doc.getDocumentElement();
+sdfElem.setAttribute('version','1.5');
+modelElem = doc.createElement('model');
+sdfElem.appendChild(modelElem);
+modelElem.setAttribute('name','testpoly');
+
+xs = linspace(-1, 1, 50);
+ys = abs(xs);
+points = [xs' ys'; xs(1) ys(1)];
+polyline(doc, modelElem, 'square', 1, 0.5, points);
+
+spawnModel('testpoly',xmlwrite(sdfElem),0,0,1,true);
+
     function redBox(doc, name, mass, l, w, h)
         box = doc.createElement('link');
         doc.getDocumentElement().appendChild(box);
@@ -137,6 +151,101 @@ spawnModel('sheet',xmlwrite(robotElem),0,0,1);
         material.setTextContent('Gazebo/Blue');
     end
 
+    function polyline(doc, modelElem, name, mass, height, points)
+        % TODO: allow this to connect to simple shapes via joints
+        polyline = doc.createElement('link');
+        modelElem.appendChild(polyline);
+        polyline.setAttribute('name', name);
+        visual = doc.createElement('visual');
+        visual.setAttribute('name', 'visual');
+        polyline.appendChild(visual);
+        visualGeometry = doc.createElement('geometry');
+        visual.appendChild(visualGeometry);
+        geometryPolyline = doc.createElement('polyline');
+        visualGeometry.appendChild(geometryPolyline);
+        for i = 1:size(points,1)
+            polylinePoint = doc.createElement('point');
+            geometryPolyline.appendChild(polylinePoint);
+            polylinePoint.setTextContent([num2str(points(i,1)),' ',num2str(points(i,2))]);
+        end
+        polylineHeight = doc.createElement('height');
+        geometryPolyline.appendChild(polylineHeight);
+        polylineHeight.setTextContent(num2str(height));
+
+        collision = doc.createElement('collision');
+        collision.setAttribute('name', 'collision');
+        polyline.appendChild(collision);
+        collisionGeometry = doc.createElement('geometry');
+        collision.appendChild(collisionGeometry);
+        geometryPolyline = doc.createElement('polyline');
+        collisionGeometry.appendChild(geometryPolyline);
+        for i = 1:size(points,1)
+            polylinePoint = doc.createElement('point');
+            geometryPolyline.appendChild(polylinePoint);
+            polylinePoint.setTextContent([num2str(points(i,1)),' ',num2str(points(i,2))]);
+        end
+        polylineHeight = doc.createElement('height');
+        geometryPolyline.appendChild(polylineHeight);
+        polylineHeight.setTextContent(num2str(height));
+
+        surface = doc.createElement('surface');
+        collision.appendChild(surface);
+        contact = doc.createElement('contact');
+        surface.appendChild(contact);
+        collideBitmask = doc.createElement('collide_bitmask');
+        contact.appendChild(collideBitmask);
+        collideBitmask.setTextContent('0xffff');
+        friction = doc.createElement('friction');
+        surface.appendChild(friction);
+        odeNode = doc.createElement('ode');
+        friction.appendChild(odeNode);
+        mu = doc.createElement('mu');
+        odeNode.appendChild(mu);
+        mu.setTextContent('100');
+        mu2 = doc.createElement('mu2');
+        odeNode.appendChild(mu2);
+        mu2.setTextContent('50');
+        
+        inertial = doc.createElement('inertial');
+        polyline.appendChild(inertial);
+        inertialPose = doc.createElement('pose');
+        inertial.appendChild(inertialPose);
+        [xcom,ycom,area] = polyCOM(points);
+        com = [xcom ycom height/2];  % need to determine this x and y
+        inertialPose.setTextContent([num2str(com(1)),' ',num2str(com(2)),' ',num2str(com(3)),' 0 0 0']);
+        inertialMass = doc.createElement('mass');
+        inertial.appendChild(inertialMass);
+        inertialMass.setTextContent(num2str(mass));
+        inertia = doc.createElement('inertia');
+        inertial.appendChild(inertia);
+        % need to figure out these parameters (for now just set them to 1
+        % along ixx, iyy, izz
+        ixx = doc.createElement('ixx');
+        inertia.appendChild(ixx);
+        ixx.setTextContent('1');
+
+        ixy = doc.createElement('ixy');
+        inertia.appendChild(ixy);
+        ixy.setTextContent('0');
+        
+        ixz = doc.createElement('ixz');
+        inertia.appendChild(ixz);
+        ixz.setTextContent('0');
+        
+        iyy = doc.createElement('iyy');
+        inertia.appendChild(iyy);
+        iyy.setTextContent('1');
+        
+        iyz = doc.createElement('iyz');
+        inertia.appendChild(iyz);
+        iyz.setTextContent('1');
+        
+        izz = doc.createElement('izz');
+        inertia.appendChild(izz);
+        izz.setTextContent('1');
+        % TODO: add material
+    end
+
     function connectWithFixedJoint(doc, jointName, parentLinkName, childLinkName, x, y, z)
         joint = doc.createElement('joint');
         doc.getDocumentElement().appendChild(joint);
@@ -153,5 +262,18 @@ spawnModel('sheet',xmlwrite(robotElem),0,0,1);
         jointOrigin = doc.createElement('origin');
         jointOrigin.setAttribute('xyz',[num2str(x),' ',num2str(y),' ',num2str(z)]);
         joint.appendChild(jointOrigin);
+    end
+
+    function [xcom, ycom, area] = polyCOM(points)
+        area = 0;
+        for i = 1:size(points,1)-1
+            area = area + 0.5*(points(i,1)*points(i+1,2) - points(i+1,1)*points(i,2));
+        end
+        xcom = 0;
+        ycom = 0;
+        for i = 1:size(points,1)-1
+            xcom = xcom + 1/(6*area)*(points(i,1)+points(i+1,1))*(points(i,1)*points(i+1,2) - points(i+1,1)*points(i,2));
+            ycom = ycom + 1/(6*area)*(points(i,2)+points(i+1,2))*(points(i,1)*points(i+1,2) - points(i+1,1)*points(i,2));
+        end
     end
 end
