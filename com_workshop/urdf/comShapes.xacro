@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="testshape">
-<xacro:macro name="blue_cylinder" params="name radius mass length x:=0 y:=0 z:=0">
+<xacro:macro name="blue_cylinder" params="name radius mass length">
 	<link name="${name}">
         <visual>
-	    <origin xyz="${x} ${y} ${z}"/>
+	    <origin xyz="0 0 ${length/2}"/>
             <geometry>
 		    <cylinder length="${length}" radius="${radius}"/>
             </geometry>
         </visual>
         <collision>
-	    <origin xyz="${x} ${y} ${z}"/>
+	    <origin xyz="0 0 ${length/2}"/>
             <geometry>
 		    <cylinder length="${length}" radius="${radius}"/>
             </geometry>
     </collision>
     <inertial>
-	    <origin xyz="${x} ${y} ${z}"/>
+	    <origin xyz="0 0 ${length/2}"/>
 	    <mass value="${mass}" />
 	    <!-- http://scienceworld.wolfram.com/physics/MomentofInertiaCylinder.html -->
 	    <inertia ixx="${1/12*mass*length*length + 1/4*mass*radius*radius}" ixy="0.0" ixz="0.0" iyy="${1/12*mass*length*length + 1/4*mass*radius*radius}" iyz="0.0" izz="${1/2*mass*radius*radius}" />
@@ -25,21 +25,22 @@
    <material>Gazebo/Blue</material>
  </gazebo>  
 </xacro:macro>
-<xacro:macro name="red_box" params="name mass length width height x:=0 y:=0 z:=0">
+<xacro:macro name="red_box" params="name mass length width height">
     <link name="${name}">
         <visual>
-		<origin xyz="${x} ${y} ${z}"/>
+		<origin xyz="0 0 ${height/2}"/>
 		<geometry>
 		    <box size="${length} ${width} ${height}"/>
             </geometry>
         </visual>
         <collision>
-	    <origin xyz="${x} ${y} ${z}"/>
+	    <origin xyz="0 0 ${height/2}"/>
             <geometry>
 		    <box size="${length} ${width} ${height}"/>
             </geometry>
     </collision>
     <inertial>
+	    <origin xyz="0 0 ${height/2}"/>
 	    <mass value="${mass}" />
 	    <!-- https://en.wikipedia.org/wiki/List_of_moments_of_inertia#List_of_3D_inertia_tensors  Note: we are using length, width, height where they use width, height, depth -->
 	    <inertia ixx="${1/12*mass*(height*height + width*width)}" ixy="0.0" ixz="0.0" iyy="${1/12*mass*(height*height + length*length)}" iyz="0.0" izz="${1/12*mass*(length*length + width*width)}" />
