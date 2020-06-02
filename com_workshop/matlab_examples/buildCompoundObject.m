@@ -1,4 +1,4 @@
-function buildTable()
+function buildCompoundObject()
 doc = com.mathworks.xml.XMLUtils.createDocument('robot');
 robotElem = doc.getDocumentElement();
 robotElem.setAttribute('name','base');
@@ -39,7 +39,8 @@ sdfElem.appendChild(modelElem);
 modelElem.setAttribute('name','testpoly');
 
 xs = linspace(-1, 1, 50);
-ys = abs(xs);
+%ys = abs(xs).^8;
+ys = exp(-(2*xs).^2);
 points = [xs' ys'; xs(1) ys(1)];
 polyline(doc, modelElem, 'square', 1, 0.5, points);
 
@@ -157,7 +158,8 @@ spawnModel('testpoly',xmlwrite(sdfElem),0,0,1,true);
         modelElem.appendChild(polyline);
         polyline.setAttribute('name', name);
         visual = doc.createElement('visual');
-        visual.setAttribute('name', 'visual');
+        % using a unique ID fixes a caching problem with the gazebo GUI
+        visual.setAttribute('name', java.util.UUID.randomUUID.toString());
         polyline.appendChild(visual);
         visualGeometry = doc.createElement('geometry');
         visual.appendChild(visualGeometry);
@@ -171,7 +173,17 @@ spawnModel('testpoly',xmlwrite(sdfElem),0,0,1,true);
         polylineHeight = doc.createElement('height');
         geometryPolyline.appendChild(polylineHeight);
         polylineHeight.setTextContent(num2str(height));
-
+        visualMaterial = doc.createElement('material');
+        visual.appendChild(visualMaterial);
+        scriptMaterial = doc.createElement('script');
+        visualMaterial.appendChild(scriptMaterial);
+        uriMaterial = doc.createElement('uri');
+        scriptMaterial.appendChild(uriMaterial);
+        uriMaterial.setTextContent('file://media/materials/scripts/gazebo.material');
+        nameMaterial = doc.createElement('name');
+        scriptMaterial.appendChild(nameMaterial);
+        nameMaterial.setTextContent('Gazebo/OrangeTransparentOverlay');
+        
         collision = doc.createElement('collision');
         collision.setAttribute('name', 'collision');
         polyline.appendChild(collision);
