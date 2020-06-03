@@ -3,8 +3,8 @@ function comGame()
 svc = rossvcclient('/gazebo/pause_physics');
 msg = rosmessage(svc);
 call(svc, msg);
-
-for i = 1 : 6
+materials = {'Gazebo/RedTransparentOverlay','Gazebo/DarkOrangeTransparentOverlay','Gazebo/GreenTransparentOverlay','Gazebo/OrangeTransparentOverlay','Gazebo/BlueTransparentOverlay'};
+for i = 1 : 5
     doc = com.mathworks.xml.XMLUtils.createDocument('robot');
     robotElem = doc.getDocumentElement();
     robotElem.setAttribute('name',['base',num2str(i)]);
@@ -22,7 +22,7 @@ for i = 1 : 6
     xs = linspace(-1, 1, 50);
     ys = abs(xs).^i;
     points = [xs' ys'; xs(1) ys(1)];
-    polyline(doc, modelElem, 'poly', 1, 0.05, points);
+    polyline(doc, modelElem, 'poly', 1, 0.05, points, materials{i});
 
     spawnModel(['poly',num2str(i)],xmlwrite(sdfElem),2.5*(i-1)-5,0,1,true);
 end

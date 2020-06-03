@@ -1,5 +1,7 @@
-function polyline(doc, modelElem, name, mass, height, points)
-    % TODO: allow this to connect to simple shapes via joints
+function polyline(doc, modelElem, name, mass, height, points, material)
+    if nargin < 7
+        material = 'Gazebo/OrangeTransparentOverlay';
+    end
     polyline = doc.createElement('link');
     modelElem.appendChild(polyline);
     polyline.setAttribute('name', name);
@@ -28,7 +30,7 @@ function polyline(doc, modelElem, name, mass, height, points)
     uriMaterial.setTextContent('file://media/materials/scripts/gazebo.material');
     nameMaterial = doc.createElement('name');
     scriptMaterial.appendChild(nameMaterial);
-    nameMaterial.setTextContent('Gazebo/OrangeTransparentOverlay');
+    nameMaterial.setTextContent(material);
 
     collision = doc.createElement('collision');
     collision.setAttribute('name', 'collision');
@@ -101,7 +103,6 @@ function polyline(doc, modelElem, name, mass, height, points)
     izz = doc.createElement('izz');
     inertia.appendChild(izz);
     izz.setTextContent('1');
-    % TODO: add material
     function [xcom, ycom, area] = polyCOM(points)
         area = 0;
         for i = 1:size(points,1)-1
