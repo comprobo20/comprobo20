@@ -182,8 +182,15 @@ function polyline(doc, modelElem, name, massOrDensityRatio, height, points, mate
             yiplus1 = points(i+1,2);
             xcom = xcom + 1/(6*area)*(xi+xiplus1)*(xi*yiplus1 - xiplus1*yi);
             ycom = ycom + 1/(6*area)*(yi+yiplus1)*(xi*yiplus1 - xiplus1*yi);
-            Ix = Ix + 1/12*(xi*yiplus1 - xiplus1*yi)*(xi^2 + xi*xiplus1 + xiplus1^2);
-            Iy = Iy + 1/12*(xi*yiplus1 - xiplus1*yi)*(yi^2 + yi*yiplus1 + yiplus1^2);
+        end
+        % shift by xcom, ycom
+        for i = 1:size(points,1)-1
+            xi = points(i,1) - xcom;
+            xiplus1 = points(i+1,1) - xcom;
+            yi = points(i,2) - ycom;
+            yiplus1 = points(i+1,2) - ycom;
+            Ix = Ix + 1/12*(xi*yiplus1 - xiplus1*yi)*(yi^2 + yi*yiplus1 + yiplus1^2);
+            Iy = Iy + 1/12*(xi*yiplus1 - xiplus1*yi)*(xi^2 + xi*xiplus1 + xiplus1^2);
             Ixy = Ixy + 1/24*(xi*yiplus1 - xiplus1*yi)*(xi*yiplus1 + 2*xi*yi + 2*xiplus1*yiplus1 + xiplus1*yi);
         end
     end
