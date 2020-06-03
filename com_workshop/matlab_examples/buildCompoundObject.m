@@ -55,6 +55,6 @@ points = [xs' ys'; xs(1) ys(1)];
 polyline(doc, modelElem, 'square', 1, 0.05, points);
 
 if usePolyline
-    spawnModel('testpoly',xmlwrite(sdfElem),0,-0.6,1,true);
+    spawnModel('testpoly',xmlwrite(sdfElem),0,-0.6,1,0,0,0,true);
 end 
 end

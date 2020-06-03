@@ -24,7 +24,7 @@ for i = 1 : 5
     points = [xs' ys'; xs(1) ys(1)];
     polyline(doc, modelElem, 'poly', 1, 0.05, points, materials{i});
 
-    spawnModel(['poly',num2str(i)],xmlwrite(sdfElem),2.5*(i-1)-5,0,1,true);
+    spawnModel(['poly',num2str(i)],xmlwrite(sdfElem),2.5*(i-1)-5,0,1,0,0,0,true);
 end
 
 end
