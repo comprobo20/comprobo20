@@ -74,6 +74,8 @@ function customBoat()
     ylabel('y (m)');
     xlim([-2 2]);
     ylim([-0.5 1.25]);
+    grayPatch = patch([-2 0 0 -2]', [-0.5 -0.5 1.25 1.25]', [1 0.5 0.5]);
+    alpha(grayPatch, 0.5);
     title('s for "spawn", r for "reset".  Crossing lines are not permitted.');
     daspect([1 1 1]);
         sld = uicontrol('Style', 'slider',...
