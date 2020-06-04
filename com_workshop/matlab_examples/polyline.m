@@ -16,11 +16,11 @@ function polyline(doc, modelElem, name, massOrDensityRatio, height, points, mate
         mass = massOrDensityRatio;
     end
     density = mass/(area*height);
-    Ix = Ix*height*density;
-    Iy = Iy*height*density;
-    Ixy = Ixy*height*density;
+    Ixx = Ix*height*density  + 1/12*mass*height^2;
+    Iyy = Iy*height*density  + 1/12*mass*height^2;
+    Ixy = -Ixy*height*density;
     Ixz = 0;
-    Iz = Ix + Iy;
+    Izz = (Ix + Iy)*height*density;
     Iyz = 0;
     polyline = doc.createElement('link');
     modelElem.appendChild(polyline);
@@ -100,7 +100,7 @@ function polyline(doc, modelElem, name, massOrDensityRatio, height, points, mate
 
     ixx = doc.createElement('ixx');
     inertia.appendChild(ixx);
-    ixx.setTextContent(num2str(Ix));
+    ixx.setTextContent(num2str(Ixx));
 
     ixy = doc.createElement('ixy');
     inertia.appendChild(ixy);
@@ -112,7 +112,7 @@ function polyline(doc, modelElem, name, massOrDensityRatio, height, points, mate
 
     iyy = doc.createElement('iyy');
     inertia.appendChild(iyy);
-    iyy.setTextContent(num2str(Iy));
+    iyy.setTextContent(num2str(Iyy));
 
     iyz = doc.createElement('iyz');
     inertia.appendChild(iyz);
@@ -120,7 +120,7 @@ function polyline(doc, modelElem, name, massOrDensityRatio, height, points, mate
 
     izz = doc.createElement('izz');
     inertia.appendChild(izz);
-    izz.setTextContent(num2str(Iz));
+    izz.setTextContent(num2str(Izz));
     
     if isBoat
         % add the buoyancy
