@@ -15,14 +15,14 @@ for i = 1:length(n)
     sdfElem.setAttribute('version', '1.5');
     modelElem = doc.createElement('model');
     sdfElem.appendChild(modelElem);
-    modelElem.setAttribute('name', ['poly',num2str(i)]);
+    modelElem.setAttribute('name', ['shape_',num2str(n(i)),'_boat']);
 
     xs = linspace(-W/2, W/2, 51);
     ys = D.*abs(2.*xs./W).^n(i);
     points = [xs' ys'; xs(1) ys(1)];
     polyline(doc, modelElem, 'poly', densityRatio, 0.6, points, materials{i}, isBoat);
     % setting a yaw of pi/2 causes the boat to orirent in an upright stance
-    spawnModel(['poly',num2str(i)],xmlwrite(sdfElem), 3*(i-1)-6, 0, 1, pi/2, 0, 0, true);
+    spawnModel(['shape_',num2str(n(i)),'_boat'],xmlwrite(sdfElem), 3*(i-1)-6, 0, 1, pi/2, 0, 0, true);
 end
 
 end
