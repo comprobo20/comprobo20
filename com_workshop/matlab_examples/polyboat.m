@@ -5,7 +5,7 @@ msg = rosmessage(svc);
 call(svc, msg);
 isBoat = true;
 materials = {'Gazebo/Purple', 'Gazebo/Blue', 'Gazebo/Red', 'Gazebo/Green', 'Gazebo/Orange'};
-n = linspace(1,5,5);
+n = [1 2 4 8];
 W = 1;
 D = 0.5;
 densityRatio = 0.25;
