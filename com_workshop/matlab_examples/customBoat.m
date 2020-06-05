@@ -9,6 +9,38 @@ function customBoat()
     function setDensityRatio(hObject, eventdata, handles)
         % callback function for the angular velocity slider
         densityRatio = get(hObject, 'Value');
+        % this is cut and pasted everywhere TODO: factor out
+        flippedUserPoints = [-userPoints(:,1) userPoints(:,2)];
+        allPoints = [startPoint; userPoints; endPoint; flippedUserPoints(end:-1:1,:); startPoint];
+        plotAVSCurve(allPoints);
+    end
+    function plotAVSCurve(allPoints)
+        if size(allPoints,1) <= 3
+            return
+        end
+        % augment points
+        N = 500;
+        allPointsAugmented = [];
+        for i = 1:size(allPoints,1)-1
+            xAug = allPoints(i,1)*linspace(1,0,N) + (1-linspace(1,0,N))*allPoints(i+1,1);
+            yAug = allPoints(i,2)*linspace(1,0,N) + (1-linspace(1,0,N))*allPoints(i+1,2);
+            allPointsAugmented = [allPointsAugmented; xAug' yAug'];
+        end
+        thetas = linspace(0,180,180+1);
+        torques = zeros(size(thetas));
+        waterlines = zeros(size(thetas));
+        for i = 1:length(thetas)
+            [torques(i),waterlines(i)] = getWaterLineGreensTheorem(thetas(i),boatLength,allPointsAugmented(:,1)',allPointsAugmented(:,2)',densityRatio);
+        end
+        prev = gcf;
+        set(0,'CurrentFigure',avscurve);
+        set(gca,'Nextplot','ReplaceChildren');
+        plot(thetas, torques);
+        xlabel('heel angle (degrees)');
+        ylabel('torque');
+        if isvalid(prev)
+            set(0, 'CurrentFigure', prev);
+        end
     end
     function mouseDownFunction(axesObj, eventDat)
         x = eventDat.IntersectionPoint(1);
@@ -26,17 +58,24 @@ function customBoat()
 
         if poly.NumRegions ~= 1 | poly.NumHoles ~= 0
             disp('Illegal polygon.  No intersections or duplicate vertices are allowed');
-            disp('Resetting');
-            userPoints = [];
-            allPoints = [startPoint; endPoint; startPoint];
         end
         set(p,'XData',allPoints(:,1),'YData',allPoints(:,2));
         set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
+        plotAVSCurve(allPoints);
     end
     function keyPressedFunction(fig_obj, eventDat)
         ck = get(fig_obj, 'CurrentKey');
         switch ck
             case 's'
+                flippedUserPoints = [-userPoints(:,1) userPoints(:,2)];
+                allPoints = [startPoint; userPoints; endPoint; flippedUserPoints(end:-1:1,:); startPoint];
+                poly = polyshape(allPoints);
+
+                if poly.NumRegions ~= 1 | poly.NumHoles ~= 0
+                    disp("Can't spawn model as it has holes or intersections");
+                    disp("Use the 'r' key to reset");
+                    return
+                end
                 % spawn the model
                 doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
                 sdfElem = doc.getDocumentElement();
@@ -44,9 +83,7 @@ function customBoat()
                 modelElem = doc.createElement('model');
                 sdfElem.appendChild(modelElem);
                 modelElem.setAttribute('name', 'customboat');
-                flippedUserPoints = [-userPoints(:,1) userPoints(:,2)];
-                allPoints = [startPoint; userPoints; endPoint; flippedUserPoints(end:-1:1,:); startPoint];
-                polyline(doc, modelElem, 'poly', densityRatio, 2, allPoints, 'Gazebo/Red', true);
+                polyline(doc, modelElem, 'poly', densityRatio, boatLength, allPoints, 'Gazebo/Red', true);
                 msg = rosmessage(pauseSvc);
                 call(pauseSvc, msg);
                 % setting a yaw of pi/2 causes the boat to orirent in an upright stance
@@ -60,6 +97,8 @@ function customBoat()
          end
     end
     densityRatio = 0.25;
+    boatLength = 2;
+    avscurve = figure;
 	f = figure('CloseRequestFcn',@myCloseRequest);
     pauseSvc = rossvcclient('/gazebo/pause_physics');
     startPoint = [0 0];
@@ -73,8 +112,8 @@ function customBoat()
     xlabel('x (m)');
     ylabel('y (m)');
     xlim([-2 2]);
-    ylim([-0.5 1.25]);
-    grayPatch = patch([-2 0 0 -2]', [-0.5 -0.5 1.25 1.25]', [1 0.5 0.5]);
+    ylim([-1.5 1.25]);
+    grayPatch = patch([-2 0 0 -2]', [-1.5 -1.5 1.25 1.25]', [1 0.5 0.5]);
     alpha(grayPatch, 0.5);
     title('s for "spawn", r for "reset".  Crossing lines are not permitted.');
     daspect([1 1 1]);
