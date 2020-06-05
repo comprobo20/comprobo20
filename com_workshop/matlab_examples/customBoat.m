@@ -14,7 +14,7 @@ function customBoat()
     function setballastLevel(hObject, eventdata, handles)
         % callback function for the angular velocity slider
         ballastLevel = get(hObject, 'Value');
-        set(b,'XData',[-2 2],'YData',[ballastLevel ballastLevel]);
+        set(b,'XData',[minX maxX],'YData',[ballastLevel ballastLevel]);
         plotAVSCurve(allPoints);
     end
     function CoM = plotAVSCurve(allPoints)
@@ -79,10 +79,7 @@ function customBoat()
         ck = get(fig_obj, 'CurrentKey');
         switch ck
             case 's'
-                flippedUserPoints = [-userPoints(:,1) userPoints(:,2)];
-                allPoints = [startPoint; userPoints; endPoint; flippedUserPoints(end:-1:1,:); startPoint];
                 poly = polyshape(allPoints);
-
                 if poly.NumRegions ~= 1 | poly.NumHoles ~= 0
                     disp("Can't spawn model as it has holes or intersections");
                     disp("Use the 'r' key to reset");
@@ -108,12 +105,16 @@ function customBoat()
                 set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
          end
     end
+    minY = -0.5;
+    maxY = 1.25;
+    minX = -2;
+    maxX = 2;
     densityRatio = 0.25;
-    ballastLevel = -1.5;
+    ballastLevel = minY;
     boatLength = 2;
     avscurve = figure;
 	f = figure('CloseRequestFcn',@myCloseRequest);
-    %pauseSvc = rossvcclient('/gazebo/pause_physics');
+    pauseSvc = rossvcclient('/gazebo/pause_physics');
     startPoint = [0 0];
     endPoint = [0 1];
     userPoints = [];
@@ -121,15 +122,15 @@ function customBoat()
     s = scatter(allPoints(:,1), allPoints(:,2),'MarkerFaceColor', uint8([128 128 128]), 'MarkerEdgeColor', uint8([64 64 64]));
     hold on;
     p = plot(allPoints(:,1), allPoints(:,2),'k');
-    b = plot([-2 2],[ballastLevel ballastLevel],'k');
+    b = plot([minX maxX],[ballastLevel ballastLevel],'k');
     CoMPlot = plot((startPoint(1)+endPoint(1))/2,(startPoint(2)+endPoint(2))/2,'b.');
     set(CoMPlot,'MarkerSize',25);
 
     xlabel('x (m)');
     ylabel('y (m)');
-    xlim([-2 2]);
-    ylim([-1.5 1.25]);
-    grayPatch = patch([-2 0 0 -2]', [-1.5 -1.5 1.25 1.25]', [1 0.5 0.5]);
+    xlim([minX maxX]);
+    ylim([minY maxY]);
+    grayPatch = patch([minX 0 0 minX]', [minY minY maxY maxY]', [1 0.5 0.5]);
     alpha(grayPatch, 0.5);
     title('s for "spawn", r for "reset".  Crossing lines are not permitted.');
     daspect([1 1 1]);
@@ -143,7 +144,7 @@ function customBoat()
         'String','Density Ratio');
     daspect([1 1 1]);
     sld = uicontrol('Style', 'slider',...
-        'Min',-1.5,'Max',1.25,'Value',ballastLevel,...
+        'Min',minY,'Max',maxY,'Value',ballastLevel,...
         'Position', [160 20 120 20],...
         'Callback', @setballastLevel);
     % Add a text uicontrol to label the slider.
