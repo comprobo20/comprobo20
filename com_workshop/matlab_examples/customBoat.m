@@ -9,12 +9,15 @@ function customBoat()
     function setDensityRatio(hObject, eventdata, handles)
         % callback function for the angular velocity slider
         densityRatio = get(hObject, 'Value');
-        % this is cut and pasted everywhere TODO: factor out
-        flippedUserPoints = [-userPoints(:,1) userPoints(:,2)];
-        allPoints = [startPoint; userPoints; endPoint; flippedUserPoints(end:-1:1,:); startPoint];
         plotAVSCurve(allPoints);
     end
-    function plotAVSCurve(allPoints)
+    function setballastLevel(hObject, eventdata, handles)
+        % callback function for the angular velocity slider
+        ballastLevel = get(hObject, 'Value');
+        set(b,'XData',[-2 2],'YData',[ballastLevel ballastLevel]);
+        plotAVSCurve(allPoints);
+    end
+    function CoM = plotAVSCurve(allPoints)
         if size(allPoints,1) <= 3
             return
         end
@@ -30,8 +33,10 @@ function customBoat()
         torques = zeros(size(thetas));
         waterlines = zeros(size(thetas));
         for i = 1:length(thetas)
-            [torques(i),waterlines(i)] = getWaterLineGreensTheorem(thetas(i),boatLength,allPointsAugmented(:,1)',allPointsAugmented(:,2)',densityRatio);
+            [torques(i),waterlines(i),CoM] = getWaterLineGreensTheorem(thetas(i),boatLength,allPointsAugmented(:,1)',allPointsAugmented(:,2)',densityRatio,ballastLevel);
         end
+        set(CoMPlot,'XData',CoM(1),'YData',CoM(2));
+
         prev = gcf;
         set(0,'CurrentFigure',avscurve);
         set(gca,'Nextplot','ReplaceChildren');
@@ -52,8 +57,7 @@ function customBoat()
         end
         figure(gcf);
         userPoints = [userPoints; [x y]];
-        flippedUserPoints = [-userPoints(:,1) userPoints(:,2)];
-        allPoints = [startPoint; userPoints; endPoint; flippedUserPoints(end:-1:1,:); startPoint];
+        updateAllPoints();
         poly = polyshape(allPoints);
 
         if poly.NumRegions ~= 1 | poly.NumHoles ~= 0
@@ -62,6 +66,14 @@ function customBoat()
         set(p,'XData',allPoints(:,1),'YData',allPoints(:,2));
         set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
         plotAVSCurve(allPoints);
+    end
+    function updateAllPoints()
+        if ~isempty(userPoints)
+            flippedUserPoints = [-userPoints(:,1) userPoints(:,2)];
+        else
+            flippedUserPoints = userPoints;
+        end
+        allPoints = [startPoint; userPoints; endPoint; flippedUserPoints(end:-1:1,:); startPoint];
     end
     function keyPressedFunction(fig_obj, eventDat)
         ck = get(fig_obj, 'CurrentKey');
@@ -76,6 +88,7 @@ function customBoat()
                     disp("Use the 'r' key to reset");
                     return
                 end
+                disp('note ballast is not currently supported when spawning the boat');
                 % spawn the model
                 doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
                 sdfElem = doc.getDocumentElement();
@@ -90,24 +103,27 @@ function customBoat()
                 spawnModel('customboat',xmlwrite(sdfElem), 0, 0, 1, pi/2, 0, 0, true);
             case 'r'
                 userPoints = [];
-                flippedUserPoints = [];
-                allPoints = [startPoint; userPoints; endPoint; flippedUserPoints(end:-1:1,:); startPoint];
+                updateAllPoints();
                 set(p,'XData',allPoints(:,1),'YData',allPoints(:,2));
                 set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
          end
     end
     densityRatio = 0.25;
+    ballastLevel = -1.5;
     boatLength = 2;
     avscurve = figure;
 	f = figure('CloseRequestFcn',@myCloseRequest);
-    pauseSvc = rossvcclient('/gazebo/pause_physics');
+    %pauseSvc = rossvcclient('/gazebo/pause_physics');
     startPoint = [0 0];
     endPoint = [0 1];
     userPoints = [];
-    allPoints = [startPoint; userPoints; endPoint];
+    allPoints = [startPoint; endPoint];
     s = scatter(allPoints(:,1), allPoints(:,2),'MarkerFaceColor', uint8([128 128 128]), 'MarkerEdgeColor', uint8([64 64 64]));
     hold on;
     p = plot(allPoints(:,1), allPoints(:,2),'k');
+    b = plot([-2 2],[ballastLevel ballastLevel],'k');
+    CoMPlot = plot((startPoint(1)+endPoint(1))/2,(startPoint(2)+endPoint(2))/2,'b.');
+    set(CoMPlot,'MarkerSize',25);
 
     xlabel('x (m)');
     ylabel('y (m)');
@@ -125,6 +141,15 @@ function customBoat()
     txt = uicontrol('Style','text',...
         'Position',[20 45 120 20],...
         'String','Density Ratio');
+    daspect([1 1 1]);
+    sld = uicontrol('Style', 'slider',...
+        'Min',-1.5,'Max',1.25,'Value',ballastLevel,...
+        'Position', [160 20 120 20],...
+        'Callback', @setballastLevel);
+    % Add a text uicontrol to label the slider.
+    txt = uicontrol('Style','text',...
+        'Position',[160 45 120 20],...
+        'String','ballast Level');
     set(f,'WindowKeyPressFcn', @keyPressedFunction);
     set(gca,'ButtonDownFcn',@mouseDownFunction,'HitTest','on');
 end
