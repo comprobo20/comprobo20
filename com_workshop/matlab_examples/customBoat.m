@@ -85,7 +85,9 @@ function customBoat()
                     disp("Use the 'r' key to reset");
                     return
                 end
-                disp('note ballast is not currently supported when spawning the boat');
+                % split the polygon at the ballast level
+                polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[ballastLevel,ballastLevel,ballastLevel+10^-5,ballastLevel+10^-5,ballastLevel]);
+                r = polySplit.regions;
                 % spawn the model
                 doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
                 sdfElem = doc.getDocumentElement();
@@ -93,7 +95,56 @@ function customBoat()
                 modelElem = doc.createElement('model');
                 sdfElem.appendChild(modelElem);
                 modelElem.setAttribute('name', 'customboat');
-                polyline(doc, modelElem, 'poly', densityRatio, boatLength, allPoints, 'Gazebo/Red', true);
+                baseLink = [];
+                for i = 1 : length(r)
+                    % this if statement prevents adding regions that are
+                    % either not in the boat (e.g., the boundary doesn't
+                    % intersect the boat) or too small.  The factor of 2 is
+                    % a fudge factor since the area was often close to what
+                    % we would predict but just a little bit larger
+                    if r(i).area > 2*(maxX - minX)*10^-5
+                        % make sure boundary is counterclockwise by
+                        % checking if the area is positive
+                        vertices = [r(i).Vertices; r(i).Vertices(1,:)];
+                        area = 0;
+                        for j = 1:size(vertices,1)-1
+                            area = area + 0.5*(vertices(j,1)*vertices(j+1,2)-vertices(j+1,1)*vertices(j,2));
+                        end
+                        if area < 0
+                            % polygon area was clockwise, make it counter
+                            % clockwise
+                            vertices = vertices(end:-1:1,:);
+                        end
+                        % check if the region is in the ballast zone or not
+                        % (10^-5 is a fudge factor)
+                        if max(vertices(:,end))<=ballastLevel+10^-5
+                            % 1.24 is the density of solid PLA
+                            componentDensityRatio = 1.24;
+                            material = 'Gazebo/Red';
+                        else
+                            componentDensityRatio = densityRatio;
+                            material = 'Gazebo/Gray';
+                        end
+                        polyline(doc, modelElem, ['polycomponent',num2str(i)], componentDensityRatio, boatLength, vertices, material, true);
+                        if isempty(baseLink)
+                            % use this as the parent for all fixed joints
+                            baseLink = ['polycomponent',num2str(i)];
+                        else
+                            % add a joint to fuse the two regions together
+                            joint = doc.createElement('joint');
+                            modelElem.appendChild(joint);
+                            joint.setAttribute('name',['polycomponent',num2str(i),'joint']);
+                            joint.setAttribute('type','fixed');
+
+                            parentLink = doc.createElement('parent');
+                            parentLink.setTextContent(baseLink);
+                            joint.appendChild(parentLink);
+                            childLink = doc.createElement('child');
+                            childLink.setTextContent(['polycomponent',num2str(i)]);
+                            joint.appendChild(childLink);
+                        end
+                    end
+                end
                 msg = rosmessage(pauseSvc);
                 call(pauseSvc, msg);
                 % setting a yaw of pi/2 causes the boat to orirent in an upright stance
