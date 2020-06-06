@@ -4,24 +4,27 @@ function customBoat()
         % to display a question dialog box
         % get rid of subscriptions to avoid race conditions
         clear pauseSvc;
+        clear updateModelSvc;
         delete(gcf)
     end
     function setDensityRatio(hObject, eventdata, handles)
         % callback function for the angular velocity slider
         densityRatio = get(hObject, 'Value');
+        % reflect the notion that the boat has not been respawned with the
+        % current configuration
+        spawned = false;
         plotAVSCurve(allPoints);
     end
     function setballastLevel(hObject, eventdata, handles)
         % callback function for the angular velocity slider
         ballastLevel = get(hObject, 'Value');
+        % reflect the notion that the boat has not been respawned with the
+        % current configuration
+        spawned = false;
         set(b,'XData',[minX maxX],'YData',[ballastLevel ballastLevel]);
         plotAVSCurve(allPoints);
     end
-    function CoM = plotAVSCurve(allPoints)
-        if size(allPoints,1) <= 3
-            return
-        end
-        % augment points
+    function allPointsAugmented = augmentPoints()
         N = 500;
         allPointsAugmented = [];
         for i = 1:size(allPoints,1)-1
@@ -29,23 +32,41 @@ function customBoat()
             yAug = allPoints(i,2)*linspace(1,0,N) + (1-linspace(1,0,N))*allPoints(i+1,2);
             allPointsAugmented = [allPointsAugmented; xAug' yAug'];
         end
-        thetas = linspace(0,180,180+1);
+    end
+    function CoM = plotAVSCurve(allPoints)
+        if size(allPoints,1) <= 3
+            return
+        end
+        % augment points as the waterline function relies on having finer
+        % granularity on the polygon sides
+        allPointsAugmented = augmentPoints();
         torques = zeros(size(thetas));
         waterlines = zeros(size(thetas));
         for i = 1:length(thetas)
             [torques(i),waterlines(i),CoM] = getWaterLineGreensTheorem(thetas(i),boatLength,allPointsAugmented(:,1)',allPointsAugmented(:,2)',densityRatio,ballastLevel);
         end
         set(CoMPlot,'XData',CoM(1),'YData',CoM(2));
-
-        prev = gcf;
-        set(0,'CurrentFigure',avscurve);
-        set(gca,'Nextplot','ReplaceChildren');
-        plot(thetas, torques);
-        xlabel('heel angle (degrees)');
-        ylabel('torque');
-        if isvalid(prev)
-            set(0, 'CurrentFigure', prev);
+        set(avsPlot,'YData',torques);
+    end
+    function avsClick(axesObj, eventDat)
+        if ~spawned
+            spawnBoat();
+            pause(2);
         end
+        x = eventDat.IntersectionPoint(1);
+        y = eventDat.IntersectionPoint(2);
+        allPointsAugmented = augmentPoints();
+        [~,waterline,~] = getWaterLineGreensTheorem(x,boatLength,allPointsAugmented(:,1)',allPointsAugmented(:,2)',densityRatio,ballastLevel);
+        msg = rosmessage(updateModelSvc);
+        msg.ModelState.ModelName = 'customboat';
+        msg.ModelState.Pose.Position.Z = -waterline;
+        quat = eul2quat([0 deg2rad(x) pi/2]);
+        msg.ModelState.Pose.Orientation.W = quat(1);
+        msg.ModelState.Pose.Orientation.X = quat(2);
+        msg.ModelState.Pose.Orientation.Y = quat(3);
+        msg.ModelState.Pose.Orientation.Z = quat(4);
+        call(updateModelSvc, msg);
+        disp(['Selected angle ',num2str(x),' degrees']);
     end
     function mouseDownFunction(axesObj, eventDat)
         x = eventDat.IntersectionPoint(1);
@@ -57,6 +78,9 @@ function customBoat()
         end
         figure(gcf);
         userPoints = [userPoints; [x y]];
+        % reflect the notion that the boat has not been respawned with the
+        % current configuration
+        spawned = false;
         updateAllPoints();
         poly = polyshape(allPoints);
 
@@ -67,6 +91,7 @@ function customBoat()
         set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
         plotAVSCurve(allPoints);
     end
+
     function updateAllPoints()
         if ~isempty(userPoints)
             flippedUserPoints = [-userPoints(:,1) userPoints(:,2)];
@@ -75,87 +100,99 @@ function customBoat()
         end
         allPoints = [startPoint; userPoints; endPoint; flippedUserPoints(end:-1:1,:); startPoint];
     end
+
+    function spawnBoat(shouldPause)
+        if nargin < 1
+            shouldPause = false;
+        end
+        poly = polyshape(allPoints);
+        if poly.NumRegions ~= 1 | poly.NumHoles ~= 0
+            disp("Can't spawn model as it has holes or intersections");
+            disp("Use the 'r' key to reset");
+            return
+        end
+        % split the polygon at the ballast level
+        polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[ballastLevel,ballastLevel,ballastLevel+10^-5,ballastLevel+10^-5,ballastLevel]);
+        r = polySplit.regions;
+        % spawn the model
+        doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
+        sdfElem = doc.getDocumentElement();
+        sdfElem.setAttribute('version', '1.5');
+        modelElem = doc.createElement('model');
+        sdfElem.appendChild(modelElem);
+        modelElem.setAttribute('name', 'customboat');
+        baseLink = [];
+        for i = 1 : length(r)
+            % this if statement prevents adding regions that are
+            % either not in the boat (e.g., the boundary doesn't
+            % intersect the boat) or too small.  The factor of 2 is
+            % a fudge factor since the area was often close to what
+            % we would predict but just a little bit larger
+            if r(i).area > 2*(maxX - minX)*10^-5
+                % make sure boundary is counterclockwise by
+                % checking if the area is positive
+                vertices = [r(i).Vertices; r(i).Vertices(1,:)];
+                area = 0;
+                for j = 1:size(vertices,1)-1
+                    area = area + 0.5*(vertices(j,1)*vertices(j+1,2)-vertices(j+1,1)*vertices(j,2));
+                end
+                if area < 0
+                    % polygon area was clockwise, make it counter
+                    % clockwise
+                    vertices = vertices(end:-1:1,:);
+                end
+                % check if the region is in the ballast zone or not
+                % (10^-5 is a fudge factor)
+                if max(vertices(:,end))<=ballastLevel+10^-5
+                    % 1.24 is the density of solid PLA
+                    componentDensityRatio = 1.24;
+                    material = 'Gazebo/Red';
+                else
+                    componentDensityRatio = densityRatio;
+                    material = 'Gazebo/Gray';
+                end
+                polyline(doc, modelElem, ['polycomponent',num2str(i)], componentDensityRatio, boatLength, vertices, material, true);
+                if isempty(baseLink)
+                    % use this as the parent for all fixed joints
+                    baseLink = ['polycomponent',num2str(i)];
+                else
+                    % add a joint to fuse the two regions together
+                    joint = doc.createElement('joint');
+                    modelElem.appendChild(joint);
+                    joint.setAttribute('name',['polycomponent',num2str(i),'joint']);
+                    joint.setAttribute('type','fixed');
+
+                    parentLink = doc.createElement('parent');
+                    parentLink.setTextContent(baseLink);
+                    joint.appendChild(parentLink);
+                    childLink = doc.createElement('child');
+                    childLink.setTextContent(['polycomponent',num2str(i)]);
+                    joint.appendChild(childLink);
+                end
+            end
+        end
+        if shouldPause
+            msg = rosmessage(pauseSvc);
+            call(pauseSvc, msg);
+        end
+        % setting a yaw of pi/2 causes the boat to orirent in an upright stance
+        spawnModel('customboat',xmlwrite(sdfElem), 0, 0, 1, pi/2, 0, 0, true);
+        spawned = true;
+    end
     function keyPressedFunction(fig_obj, eventDat)
         ck = get(fig_obj, 'CurrentKey');
         switch ck
             case 's'
-                poly = polyshape(allPoints);
-                if poly.NumRegions ~= 1 | poly.NumHoles ~= 0
-                    disp("Can't spawn model as it has holes or intersections");
-                    disp("Use the 'r' key to reset");
-                    return
-                end
-                % split the polygon at the ballast level
-                polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[ballastLevel,ballastLevel,ballastLevel+10^-5,ballastLevel+10^-5,ballastLevel]);
-                r = polySplit.regions;
-                % spawn the model
-                doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
-                sdfElem = doc.getDocumentElement();
-                sdfElem.setAttribute('version', '1.5');
-                modelElem = doc.createElement('model');
-                sdfElem.appendChild(modelElem);
-                modelElem.setAttribute('name', 'customboat');
-                baseLink = [];
-                for i = 1 : length(r)
-                    % this if statement prevents adding regions that are
-                    % either not in the boat (e.g., the boundary doesn't
-                    % intersect the boat) or too small.  The factor of 2 is
-                    % a fudge factor since the area was often close to what
-                    % we would predict but just a little bit larger
-                    if r(i).area > 2*(maxX - minX)*10^-5
-                        % make sure boundary is counterclockwise by
-                        % checking if the area is positive
-                        vertices = [r(i).Vertices; r(i).Vertices(1,:)];
-                        area = 0;
-                        for j = 1:size(vertices,1)-1
-                            area = area + 0.5*(vertices(j,1)*vertices(j+1,2)-vertices(j+1,1)*vertices(j,2));
-                        end
-                        if area < 0
-                            % polygon area was clockwise, make it counter
-                            % clockwise
-                            vertices = vertices(end:-1:1,:);
-                        end
-                        % check if the region is in the ballast zone or not
-                        % (10^-5 is a fudge factor)
-                        if max(vertices(:,end))<=ballastLevel+10^-5
-                            % 1.24 is the density of solid PLA
-                            componentDensityRatio = 1.24;
-                            material = 'Gazebo/Red';
-                        else
-                            componentDensityRatio = densityRatio;
-                            material = 'Gazebo/Gray';
-                        end
-                        polyline(doc, modelElem, ['polycomponent',num2str(i)], componentDensityRatio, boatLength, vertices, material, true);
-                        if isempty(baseLink)
-                            % use this as the parent for all fixed joints
-                            baseLink = ['polycomponent',num2str(i)];
-                        else
-                            % add a joint to fuse the two regions together
-                            joint = doc.createElement('joint');
-                            modelElem.appendChild(joint);
-                            joint.setAttribute('name',['polycomponent',num2str(i),'joint']);
-                            joint.setAttribute('type','fixed');
-
-                            parentLink = doc.createElement('parent');
-                            parentLink.setTextContent(baseLink);
-                            joint.appendChild(parentLink);
-                            childLink = doc.createElement('child');
-                            childLink.setTextContent(['polycomponent',num2str(i)]);
-                            joint.appendChild(childLink);
-                        end
-                    end
-                end
-                msg = rosmessage(pauseSvc);
-                call(pauseSvc, msg);
-                % setting a yaw of pi/2 causes the boat to orirent in an upright stance
-                spawnModel('customboat',xmlwrite(sdfElem), 0, 0, 1, pi/2, 0, 0, true);
+                spawnBoat(true);
             case 'r'
                 userPoints = [];
+                spawned = false;
                 updateAllPoints();
                 set(p,'XData',allPoints(:,1),'YData',allPoints(:,2));
                 set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
          end
     end
+    spawned = false;
     minY = -0.5;
     maxY = 1.25;
     minX = -2;
@@ -163,9 +200,10 @@ function customBoat()
     densityRatio = 0.25;
     ballastLevel = minY;
     boatLength = 2;
-    avscurve = figure;
 	f = figure('CloseRequestFcn',@myCloseRequest);
+    subplot(7,1,4:6);
     pauseSvc = rossvcclient('/gazebo/pause_physics');
+    updateModelSvc = rossvcclient('gazebo/set_model_state');
     startPoint = [0 0];
     endPoint = [0 1];
     userPoints = [];
@@ -204,4 +242,13 @@ function customBoat()
         'String','ballast Level');
     set(f,'WindowKeyPressFcn', @keyPressedFunction);
     set(gca,'ButtonDownFcn',@mouseDownFunction,'HitTest','on');
+    thetas = linspace(0,180,180+1);
+    subplot(7,1,1:2);
+    avsPlot = plot(thetas,zeros(size(thetas)));
+    set(gca,'ButtonDownFcn',@avsClick,'HitTest','on');
+
+    hold on; % draw a line to make the AVS easier to see
+    plot(thetas,zeros(size(thetas)),'r');
+    xlabel('heel angle (degrees)');
+    ylabel('torque');
 end
