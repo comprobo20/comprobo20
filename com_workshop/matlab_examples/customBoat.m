@@ -34,6 +34,7 @@ function customBoat()
         end
     end
     function CoM = plotAVSCurve(allPoints)
+        startAVSCurve = tic;
         if size(allPoints,1) <= 3
             return
         end
@@ -42,9 +43,60 @@ function customBoat()
         allPointsAugmented = augmentPoints();
         torques = zeros(size(thetas));
         waterlines = zeros(size(thetas));
-        for i = 1:length(thetas)
-            [torques(i),waterlines(i),CoM] = getWaterLineGreensTheorem(thetas(i),boatLength,allPointsAugmented(:,1)',allPointsAugmented(:,2)',densityRatio,ballastLevel);
+        poly = polyshape(allPoints);
+        if poly.NumRegions ~= 1 | poly.NumHoles ~= 0
+            disp("Can't spawn model as it has holes or intersections");
+            disp("Use the 'r' key to reset");
+            return
         end
+        totalWeightedArea = 0;
+        xcom = 0;
+        ycom = 0;
+        % split the polygon at the ballast level
+        polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[ballastLevel,ballastLevel,ballastLevel+10^-5,ballastLevel+10^-5,ballastLevel]);
+        r = polySplit.regions;
+        for i = 1 : length(r)
+            % this if statement prevents adding regions that are
+            % either not in the boat (e.g., the boundary doesn't
+            % intersect the boat) or too small.  The factor of 2 is
+            % a fudge factor since the area was often close to what
+            % we would predict but just a little bit larger
+
+            if r(i).area > 2*(maxX - minX)*10^-5
+                % make sure boundary is counterclockwise by
+                % checking if the area is positive
+                vertices = [r(i).Vertices; r(i).Vertices(1,:)];
+                area = 0;
+                for j = 1:size(vertices,1)-1
+                    area = area + 0.5*(vertices(j,1)*vertices(j+1,2)-vertices(j+1,1)*vertices(j,2));
+                end
+                if area < 0
+                    % polygon area was clockwise, make it counter
+                    % clockwise
+                    vertices = vertices(end:-1:1,:);
+                    area = -area;
+                end
+                % check if the region is in the ballast zone or not
+                % (10^-5 is a fudge factor)
+                if max(vertices(:,end))<=ballastLevel+10^-5
+                    % 1.24 is the density of solid PLA
+                    componentDensityRatio = 1.24;
+                    [~,xcomRegion,ycomRegion] = cumulativeArea(vertices,area-10^-4);
+                else
+                    componentDensityRatio = densityRatio;
+                    [~,xcomRegion,ycomRegion] = cumulativeArea(vertices,area-10^-4);
+                end
+                totalWeightedArea = totalWeightedArea + area*componentDensityRatio;
+                xcom = xcom + componentDensityRatio*xcomRegion*area;
+                ycom = ycom + componentDensityRatio*ycomRegion*area;
+            end
+        end
+        CoM = [xcom ycom]/ totalWeightedArea;
+        for i = 1:length(thetas)
+            [torques(i),waterlines(i)] = getWaterLineGreensTheorem(thetas(i),boatLength,CoM,totalWeightedArea,allPoints,densityRatio,ballastLevel);
+        end
+        toc(startAVSCurve);
+
         set(CoMPlot,'XData',CoM(1),'YData',CoM(2));
         set(avsPlot,'YData',torques);
     end
@@ -56,7 +108,7 @@ function customBoat()
         x = eventDat.IntersectionPoint(1);
         y = eventDat.IntersectionPoint(2);
         allPointsAugmented = augmentPoints();
-        [~,waterline,~] = getWaterLineGreensTheorem(x,boatLength,allPointsAugmented(:,1)',allPointsAugmented(:,2)',densityRatio,ballastLevel);
+        [~,waterline,~] = getWaterLineGreensTheorem(x,boatLength,CoM,totalWeightedArea,allPoints,densityRatio,ballastLevel);
         msg = rosmessage(updateModelSvc);
         msg.ModelState.ModelName = 'customboat';
         msg.ModelState.Pose.Position.Z = -waterline;
@@ -208,11 +260,15 @@ function customBoat()
     endPoint = [0 1];
     userPoints = [];
     allPoints = [startPoint; endPoint];
+
+    weightedArea = 0;
     s = scatter(allPoints(:,1), allPoints(:,2),'MarkerFaceColor', uint8([128 128 128]), 'MarkerEdgeColor', uint8([64 64 64]));
     hold on;
     p = plot(allPoints(:,1), allPoints(:,2),'k');
     b = plot([minX maxX],[ballastLevel ballastLevel],'k');
-    CoMPlot = plot((startPoint(1)+endPoint(1))/2,(startPoint(2)+endPoint(2))/2,'b.');
+    CoM = [(startPoint(1)+endPoint(1))/2, (startPoint(2)+endPoint(2))/2];
+    totalWeightedArea = 0;
+    CoMPlot = plot(CoM(1),CoM(2),'b.');
     set(CoMPlot,'MarkerSize',25);
 
     xlabel('x (m)');
