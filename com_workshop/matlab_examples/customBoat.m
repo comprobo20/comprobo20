@@ -25,7 +25,7 @@ function customBoat()
         plotAVSCurve(allPoints);
     end
 
-    function [torque,d,CoM] = getWaterLineGreensTheorem(theta, L, CoM, densityRatioWeightedArea, allPoints)
+    function [torque,d,CoM] = getWaterLineHelper(theta, L, CoM, densityRatioWeightedArea, allPoints)
         mass = densityRatioWeightedArea*L*1000;%Kg
 
         % define the direction of gravity
@@ -110,7 +110,7 @@ function customBoat()
         end
         CoM = CoM / totalWeightedArea;
         for i = 1:length(thetas)
-            [torques(i),waterlines(i)] = getWaterLineGreensTheorem(thetas(i),boatLength,CoM,totalWeightedArea,allPoints);
+            [torques(i),waterlines(i)] = getWaterLineHelper(thetas(i),boatLength,CoM,totalWeightedArea,allPoints);
         end
         set(CoMPlot,'XData',CoM(1),'YData',CoM(2));
         set(avsPlot,'YData',torques);
@@ -121,7 +121,7 @@ function customBoat()
             pause(2);
         end
         x = eventDat.IntersectionPoint(1);
-        [~,waterline,~] = getWaterLineGreensTheorem(x,boatLength,CoM,totalWeightedArea,allPoints);
+        [~,waterline,~] = getWaterLineHelper(x,boatLength,CoM,totalWeightedArea,allPoints);
         msg = rosmessage(updateModelSvc);
         msg.ModelState.ModelName = 'customboat';
         msg.ModelState.Pose.Position.Z = -waterline;
