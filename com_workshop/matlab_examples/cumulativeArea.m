@@ -64,6 +64,11 @@ function [level, xcob, ycob] = cumulativeArea(points,desiredArea)
     end
     lb = min(points(:,2));
     ub = max(points(:,2));
+    if isinf(desiredArea)
+        level = ub;
+        [levelArea,xcob,ycob] = areaHelper(level,true);
+        return;
+    end
     if areaHelper(ub) < desiredArea
         % impossible
         return
