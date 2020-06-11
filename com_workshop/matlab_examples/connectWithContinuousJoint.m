@@ -1,4 +1,12 @@
-function connectWithContinuousJoint(doc, jointName, parentLinkName, childLinkName, x, y, z)
+function connectWithContinuousJoint(doc, jointName, parentLinkName, childLinkName, x, y, z, offsetX, offsetY, offsetZ)
+    if nargin > 7
+        masslessLink = doc.createElement('link');
+        doc.getDocumentElement().appendChild(masslessLink);
+        intermediateLinkName = [parentLinkName,'_',childLinkName,'_dummy'];
+        masslessLink.setAttribute('name', intermediateLinkName);
+        connectWithFixedJoint(doc, [jointName,'_fixed'], intermediateLinkName, childLinkName, offsetX, offsetY, offsetZ);
+        childLinkName = intermediateLinkName;
+    end
     joint = doc.createElement('joint');
     doc.getDocumentElement().appendChild(joint);
     joint.setAttribute('name',jointName);
