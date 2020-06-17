@@ -1,4 +1,4 @@
-function polyline(doc, modelElem, name, massOrDensityRatio, height, points, material, isBoat)
+function polyline(doc, modelElem, name, massOrDensityRatio, height, points, material, isBoat, pose)
     if nargin < 7
         material = 'Gazebo/OrangeTransparentOverlay';
     end
@@ -22,9 +22,16 @@ function polyline(doc, modelElem, name, massOrDensityRatio, height, points, mate
     Ixz = 0;
     Izz = (Ix + Iy)*height*density;
     Iyz = 0;
+
     polyline = doc.createElement('link');
     modelElem.appendChild(polyline);
     polyline.setAttribute('name', name);
+    if exist('pose','var')
+        poseElem = doc.createElement('pose');
+        polyline.appendChild(poseElem);
+        poseElem.setAttribute('frame','');
+        poseElem.setTextContent(pose);
+    end
     visual = doc.createElement('visual');
     % using a unique ID fixes a caching problem with the gazebo GUI
     visual.setAttribute('name', java.util.UUID.randomUUID.toString());
@@ -123,7 +130,7 @@ function polyline(doc, modelElem, name, massOrDensityRatio, height, points, mate
     izz.setTextContent(num2str(Izz));
     
     if isBoat
-        % add the buoyancy
+        % add the buoyancy TODO: probably have to add the pose here
         plugin = doc.createElement('plugin');
         modelElem.appendChild(plugin);
         plugin.setAttribute('filename','libbuoyancy_gazebo_plugin.so');
