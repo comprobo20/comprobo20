@@ -8,17 +8,14 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
     % precision of output (extra digits help when polygon points are close
     % together)
     num2strPrecision = 10;
-    % default drag in case it's a boat
-    linearDrag = 10;
-    angularDrag = 25;
+    % drag in case it's a boat
+    linearDrag = 2;
+    angularDrag = 5;
     if ~iscell(regions)
         % assume one region with the Z base of 0
         regions = {regions};
         materials = {materials};
         Z = 0;
-        % TODO: for some reason these values need to be adjusted
-        linearDrag = 2;
-        angularDrag = 5;
     end
 
     zcomOverall = 0;
@@ -202,7 +199,6 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
         fluidLevel.setTextContent('0.0');
         linearDragElem = doc.createElement('linear_drag');
         plugin.appendChild(linearDragElem);
-        disp('TODO: Seems to be a problem with the linear and angular drag');
         linearDragElem.setTextContent(num2str(linearDrag, num2strPrecision));
         angularDragElem = doc.createElement('angular_drag');
         plugin.appendChild(angularDragElem);

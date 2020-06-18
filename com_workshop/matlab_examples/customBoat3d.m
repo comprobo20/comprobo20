@@ -298,7 +298,7 @@ function customBoat3d()
     boatLength = 2;
     
     longitudinalShapeParameter = 2;
-    Z = linspace(-boatLength/2, boatLength/2, 50);
+    Z = linspace(-boatLength/2, boatLength/2, 26);
     Z = Z - (Z(2)-Z(1))/2;  % maintain a Z center of mass of 0
 
     loftCurve = abs(2.*(Z + (Z(2)-Z(1))/2)./boatLength).^longitudinalShapeParameter;
@@ -365,7 +365,7 @@ function customBoat3d()
     set(f,'WindowKeyPressFcn', @keyPressedFunction);
     set(gca,'ButtonDownFcn',@mouseDownFunction,'HitTest','on');
     % plot the AVS curve
-    thetas = linspace(0,180,1800+1);
+    thetas = linspace(0,180,180+1);
     subplot(7,1,1:2);
     avsPlot = plot(thetas,zeros(size(thetas)));
     % when the user clicks the AVS plot, the boat is placed at that angle
