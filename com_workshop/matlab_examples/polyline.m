@@ -1,171 +1,241 @@
-function polyline(doc, modelElem, name, massOrDensityRatio, height, points, material, isBoat, pose)
+function polyline(doc, modelElem, name, componentDensityRatios, height, regions, materials, isBoat, Z)
     if nargin < 7
-        material = 'Gazebo/OrangeTransparentOverlay';
+        materials = {'Gazebo/OrangeTransparentOverlay'};
     end
     if nargin < 8
         isBoat = false;
     end
-    % if we have a boat, the massOrDensityRatio is interpreted as a density
-    % to water (1000 kg/m^3).  If it isn't a boat, then we just assume that
-    % it is the mass itself
-    [xcom, ycom, area, Ix, Iy, Ixy] = polyCOM(points);
-
-    if isBoat
-        mass = area*height*1000*massOrDensityRatio;
-    else
-        mass = massOrDensityRatio;
+    % precision of output (extra digits help when polygon points are close
+    % together)
+    num2strPrecision = 10;
+    % default drag in case it's a boat
+    linearDrag = 10;
+    angularDrag = 25;
+    if ~iscell(regions)
+        % assume one region with the Z base of 0
+        regions = {regions};
+        materials = {materials};
+        Z = 0;
+        % TODO: for some reason these values need to be adjusted
+        linearDrag = 2;
+        angularDrag = 5;
     end
-    density = mass/(area*height);
-    Ixx = Ix*height*density  + 1/12*mass*height^2;
-    Iyy = Iy*height*density  + 1/12*mass*height^2;
-    Ixy = -Ixy*height*density;
-    Ixz = 0;
-    Izz = (Ix + Iy)*height*density;
-    Iyz = 0;
 
+    zcomOverall = 0;
+    xcomOverall = 0;
+    ycomOverall = 0;
+    mass = 0;
+    regionMass = [];
+
+    for r = 1:length(regions)
+        [xcom, ycom, area, Ix, Iy, Ixy] = polyCOM(regions{r});
+
+        zcom = Z(r) + height/2;
+        % if we have a boat, the componentDensityRatios is interpreted as a density
+        % to water ratio (assumed ot be 1000 kg/m^3).  If it isn't a boat, then we
+        % just assume that it is the mass itself
+        if ~isBoat
+            regionMass(end+1) = componentDensityRatios(r);
+        else
+            regionMass(end+1) = height*area*componentDensityRatios(r)*1000;
+        end
+        mass = mass + regionMass(r);
+        xcomOverall = xcomOverall + xcom*regionMass(r);
+        ycomOverall = ycomOverall + ycom*regionMass(r);
+        zcomOverall = zcomOverall + zcom*regionMass(r);
+    end
+    xcomOverall = xcomOverall / mass;
+    ycomOverall = ycomOverall / mass;
+    zcomOverall = zcomOverall / mass;
+    disp(['Total mass ', num2str(mass, num2strPrecision)]);
+
+    % now that we have the overall CoM, we can compute the moment of
+    % inertia tensor
+    IOverall = zeros(3);
+    for r = 1:length(regions)
+        [xcomRegion, ycomRegion, ~, Ix, Iy, Ixy] = polyCOM(regions{r});
+        zcomRegion = Z(r) + height/2;
+        regionDensity = 1000*componentDensityRatios(r);
+        IxxAboutRegionCoM = Ix*height*regionDensity  + 1/12*regionMass(r)*height^2;
+        IyyAboutRegionCoM = Iy*height*regionDensity  + 1/12*regionMass(r)*height^2;
+        IxyAboutRegionCoM = -Ixy*height*regionDensity;
+        IzzAboutRegionCoM = (Ix + Iy)*height*regionDensity;
+        IxzAboutRegionCoM = 0;
+        IyzAboutRegionCoM = 0;
+        % https://books.google.com/books?id=9vt9DwAAQBAJ&pg=PA457&lpg=PA457&dq=shifting+inertia+tensor+to+a+new+point&source=bl&ots=9oD13LyQiQ&sig=ACfU3U2JB5Pt7y7vgtPQnBnaKyQp4O3G9g&hl=en&sa=X&ved=2ahUKEwiVitKFx4nqAhWySjABHXTkAPMQ6AEwD3oECAoQAQ#v=onepage&q=shifting%20inertia%20tensor%20to%20a%20new%20point&f=false
+        Ic = [IxxAboutRegionCoM IxyAboutRegionCoM IxzAboutRegionCoM;...
+              IxyAboutRegionCoM IyyAboutRegionCoM IyzAboutRegionCoM;...
+              IxzAboutRegionCoM IyzAboutRegionCoM IzzAboutRegionCoM];
+        shift = [xcomOverall - xcomRegion; ycomOverall - ycomRegion; zcomOverall - zcomRegion];
+        AugmentationDueToNewCoM = regionMass(r)*[shift(2)^2+shift(3)^2, -shift(1)*shift(2), -shift(1)*shift(3);...
+                                                 -shift(1)*shift(2), shift(1)^2+shift(3)^2, -shift(2)*shift(3);...
+                                                 -shift(1)*shift(3), -shift(2)*shift(3), shift(1)^2+shift(2)^2];
+        Ishifted = Ic + AugmentationDueToNewCoM;
+        IOverall = IOverall + Ishifted;
+     end
+
+    Ixx = IOverall(1,1);
+    Ixy = IOverall(1,2);
+    Ixz = IOverall(1,3);
+    Iyy = IOverall(2,2);
+    Iyz = IOverall(2,3);
+    Izz = IOverall(3,3);
     polyline = doc.createElement('link');
     modelElem.appendChild(polyline);
     polyline.setAttribute('name', name);
-    if exist('pose','var')
-        poseElem = doc.createElement('pose');
-        polyline.appendChild(poseElem);
-        poseElem.setAttribute('frame','');
-        poseElem.setTextContent(pose);
+    for i = 1:length(regions)
+        points = regions{i};
+        visual = doc.createElement('visual');
+        % using a unique ID fixes a caching problem with the gazebo GUI
+        visual.setAttribute('name', java.util.UUID.randomUUID.toString());
+        polyline.appendChild(visual);
+        visualPose = doc.createElement('pose');
+        visual.appendChild(visualPose);
+        visualPose.setTextContent(['0 0 ',num2str(Z(i), num2strPrecision),' 0 0 0']);
+        visualGeometry = doc.createElement('geometry');
+        visual.appendChild(visualGeometry);
+        geometryPolyline = doc.createElement('polyline');
+        visualGeometry.appendChild(geometryPolyline);
+        for j = 1:size(points,1)
+            polylinePoint = doc.createElement('point');
+            geometryPolyline.appendChild(polylinePoint);
+            polylinePoint.setTextContent([num2str(points(j,1), num2strPrecision),' ',num2str(points(j,2), num2strPrecision)]);
+        end
+        polylineHeight = doc.createElement('height');
+        geometryPolyline.appendChild(polylineHeight);
+        polylineHeight.setTextContent(num2str(height, num2strPrecision));
+        visualMaterial = doc.createElement('material');
+        visual.appendChild(visualMaterial);
+        scriptMaterial = doc.createElement('script');
+        visualMaterial.appendChild(scriptMaterial);
+        uriMaterial = doc.createElement('uri');
+        scriptMaterial.appendChild(uriMaterial);
+        uriMaterial.setTextContent('file://media/materials/scripts/gazebo.material');
+        nameMaterial = doc.createElement('name');
+        scriptMaterial.appendChild(nameMaterial);
+        nameMaterial.setTextContent(materials{i});
     end
-    visual = doc.createElement('visual');
-    % using a unique ID fixes a caching problem with the gazebo GUI
-    visual.setAttribute('name', java.util.UUID.randomUUID.toString());
-    polyline.appendChild(visual);
-    visualGeometry = doc.createElement('geometry');
-    visual.appendChild(visualGeometry);
-    geometryPolyline = doc.createElement('polyline');
-    visualGeometry.appendChild(geometryPolyline);
-    for i = 1:size(points,1)
-        polylinePoint = doc.createElement('point');
-        geometryPolyline.appendChild(polylinePoint);
-        polylinePoint.setTextContent([num2str(points(i,1)),' ',num2str(points(i,2))]);
+    for i=1:length(regions)
+        points = regions{i};
+        collision = doc.createElement('collision');
+        collision.setAttribute('name', java.util.UUID.randomUUID.toString());
+        polyline.appendChild(collision);
+        collisionPose = doc.createElement('pose');
+        collision.appendChild(collisionPose);
+        collisionPose.setTextContent(['0 0 ',num2str(Z(i), num2strPrecision),' 0 0 0']);
+        collisionGeometry = doc.createElement('geometry');
+        collision.appendChild(collisionGeometry);
+        geometryPolyline = doc.createElement('polyline');
+        collisionGeometry.appendChild(geometryPolyline);
+        for j = 1:size(points,1)
+            polylinePoint = doc.createElement('point');
+            geometryPolyline.appendChild(polylinePoint);
+            polylinePoint.setTextContent([num2str(points(j,1), num2strPrecision),' ',num2str(points(j,2), num2strPrecision)]);
+        end
+        polylineHeight = doc.createElement('height');
+        geometryPolyline.appendChild(polylineHeight);
+        polylineHeight.setTextContent(num2str(height, num2strPrecision));
+
+        surface = doc.createElement('surface');
+        collision.appendChild(surface);
+        contact = doc.createElement('contact');
+        surface.appendChild(contact);
+        collideBitmask = doc.createElement('collide_bitmask');
+        contact.appendChild(collideBitmask);
+        collideBitmask.setTextContent('0xffff');
+        friction = doc.createElement('friction');
+        surface.appendChild(friction);
+        odeNode = doc.createElement('ode');
+        friction.appendChild(odeNode);
+        mu = doc.createElement('mu');
+        odeNode.appendChild(mu);
+        mu.setTextContent('100');
+        mu2 = doc.createElement('mu2');
+        odeNode.appendChild(mu2);
+        mu2.setTextContent('50');
     end
-    polylineHeight = doc.createElement('height');
-    geometryPolyline.appendChild(polylineHeight);
-    polylineHeight.setTextContent(num2str(height));
-    visualMaterial = doc.createElement('material');
-    visual.appendChild(visualMaterial);
-    scriptMaterial = doc.createElement('script');
-    visualMaterial.appendChild(scriptMaterial);
-    uriMaterial = doc.createElement('uri');
-    scriptMaterial.appendChild(uriMaterial);
-    uriMaterial.setTextContent('file://media/materials/scripts/gazebo.material');
-    nameMaterial = doc.createElement('name');
-    scriptMaterial.appendChild(nameMaterial);
-    nameMaterial.setTextContent(material);
-
-    collision = doc.createElement('collision');
-    collision.setAttribute('name', 'collision');
-    polyline.appendChild(collision);
-    collisionGeometry = doc.createElement('geometry');
-    collision.appendChild(collisionGeometry);
-    geometryPolyline = doc.createElement('polyline');
-    collisionGeometry.appendChild(geometryPolyline);
-    for i = 1:size(points,1)
-        polylinePoint = doc.createElement('point');
-        geometryPolyline.appendChild(polylinePoint);
-        polylinePoint.setTextContent([num2str(points(i,1)),' ',num2str(points(i,2))]);
-    end
-    polylineHeight = doc.createElement('height');
-    geometryPolyline.appendChild(polylineHeight);
-    polylineHeight.setTextContent(num2str(height));
-
-    surface = doc.createElement('surface');
-    collision.appendChild(surface);
-    contact = doc.createElement('contact');
-    surface.appendChild(contact);
-    collideBitmask = doc.createElement('collide_bitmask');
-    contact.appendChild(collideBitmask);
-    collideBitmask.setTextContent('0xffff');
-    friction = doc.createElement('friction');
-    surface.appendChild(friction);
-    odeNode = doc.createElement('ode');
-    friction.appendChild(odeNode);
-    mu = doc.createElement('mu');
-    odeNode.appendChild(mu);
-    mu.setTextContent('100');
-    mu2 = doc.createElement('mu2');
-    odeNode.appendChild(mu2);
-    mu2.setTextContent('50');
-
     inertial = doc.createElement('inertial');
     polyline.appendChild(inertial);
     inertialPose = doc.createElement('pose');
     inertial.appendChild(inertialPose);
-    com = [xcom ycom height/2];  % need to determine this x and y
-    inertialPose.setTextContent([num2str(com(1)),' ',num2str(com(2)),' ',num2str(com(3)),' 0 0 0']);
+    com = [xcomOverall ycomOverall zcomOverall];
+    inertialPose.setTextContent([num2str(com(1), num2strPrecision),' ',num2str(com(2), num2strPrecision),' ',num2str(com(3), num2strPrecision),' 0 0 0']);
     inertialMass = doc.createElement('mass');
     inertial.appendChild(inertialMass);
-    inertialMass.setTextContent(num2str(mass));
+    inertialMass.setTextContent(num2str(mass, num2strPrecision));
     inertia = doc.createElement('inertia');
     inertial.appendChild(inertia);
 
     ixx = doc.createElement('ixx');
     inertia.appendChild(ixx);
-    ixx.setTextContent(num2str(Ixx));
+    ixx.setTextContent(num2str(Ixx, num2strPrecision));
 
     ixy = doc.createElement('ixy');
     inertia.appendChild(ixy);
-    ixy.setTextContent(num2str(Ixy));
+    ixy.setTextContent(num2str(Ixy, num2strPrecision));
 
     ixz = doc.createElement('ixz');
     inertia.appendChild(ixz);
-    ixz.setTextContent(num2str(Ixz));
+    ixz.setTextContent(num2str(Ixz, num2strPrecision));
 
     iyy = doc.createElement('iyy');
     inertia.appendChild(iyy);
-    iyy.setTextContent(num2str(Iyy));
+    iyy.setTextContent(num2str(Iyy, num2strPrecision));
 
     iyz = doc.createElement('iyz');
     inertia.appendChild(iyz);
-    iyz.setTextContent(num2str(Iyz));
+    iyz.setTextContent(num2str(Iyz, num2strPrecision));
 
     izz = doc.createElement('izz');
     inertia.appendChild(izz);
-    izz.setTextContent(num2str(Izz));
-    
+    izz.setTextContent(num2str(Izz, num2strPrecision));
     if isBoat
-        % add the buoyancy TODO: probably have to add the pose here
         plugin = doc.createElement('plugin');
         modelElem.appendChild(plugin);
         plugin.setAttribute('filename','libbuoyancy_gazebo_plugin.so');
-        plugin.setAttribute('name','BuoyancyPlugin.so');
+        plugin.setAttribute('name',java.util.UUID.randomUUID.toString());
         fluidDensity = doc.createElement('fluid_density');
         plugin.appendChild(fluidDensity);
         fluidDensity.setTextContent('1000');
         fluidLevel = doc.createElement('fluid_level');
         plugin.appendChild(fluidLevel);
         fluidLevel.setTextContent('0.0');
-        linearDrag = doc.createElement('linear_drag');
-        plugin.appendChild(linearDrag);
-        linearDrag.setTextContent('5');
-        angularDrag = doc.createElement('angular_drag');
-        plugin.appendChild(angularDrag);
-        angularDrag.setTextContent('2.0');
-        buoyancy = doc.createElement('buoyancy');
-        plugin.appendChild(buoyancy);
-        buoyancy.setAttribute('name','buoyancy');
-        linkName = doc.createElement('link_name');
-        buoyancy.appendChild(linkName);
-        linkName.setTextContent(name);
-       
-        buoyancyGeometry = doc.createElement('geometry');
-        buoyancy.appendChild(buoyancyGeometry);
-        geometryPolyline = doc.createElement('polyline');
-        buoyancyGeometry.appendChild(geometryPolyline);
-        for i = 1:size(points,1)
-            polylinePoint = doc.createElement('point');
-            geometryPolyline.appendChild(polylinePoint);
-            polylinePoint.setTextContent([num2str(points(i,1)),' ',num2str(points(i,2))]);
+        linearDragElem = doc.createElement('linear_drag');
+        plugin.appendChild(linearDragElem);
+        disp('TODO: Seems to be a problem with the linear and angular drag');
+        linearDragElem.setTextContent(num2str(linearDrag, num2strPrecision));
+        angularDragElem = doc.createElement('angular_drag');
+        plugin.appendChild(angularDragElem);
+        angularDragElem.setTextContent(num2str(angularDrag, num2strPrecision));
+        for i=1:length(regions)
+            points = regions{i};
+            buoyancy = doc.createElement('buoyancy');
+            plugin.appendChild(buoyancy);
+            buoyancy.setAttribute('name',java.util.UUID.randomUUID.toString());
+            linkName = doc.createElement('link_name');
+            buoyancy.appendChild(linkName);
+            linkName.setTextContent(name);
+            massElem = doc.createElement('mass');
+            buoyancy.appendChild(massElem);
+            massElem.setTextContent(num2str(regionMass(i), num2strPrecision));
+
+            buoyancyGeometry = doc.createElement('geometry');
+            buoyancy.appendChild(buoyancyGeometry);
+            geometryPolyline = doc.createElement('polyline');
+            buoyancyGeometry.appendChild(geometryPolyline);
+
+            for j = 1:size(points,1)
+                polylinePoint = doc.createElement('point');
+                geometryPolyline.appendChild(polylinePoint);
+                polylinePoint.setTextContent([num2str(points(j,1), num2strPrecision),' ',num2str(points(j,2), num2strPrecision)]);
+            end
+            polylineHeight = doc.createElement('height');
+            polylineHeight.setTextContent(num2str(height, num2strPrecision));
+            geometryPolyline.appendChild(polylineHeight);
+            polylineZShift = doc.createElement('zshift');
+            polylineZShift.setTextContent(num2str(Z(i), num2strPrecision));
+            geometryPolyline.appendChild(polylineZShift);
         end
-        polylineHeight = doc.createElement('height');
-        polylineHeight.setTextContent(num2str(height));
-        geometryPolyline.appendChild(polylineHeight);
     end
     
     function [xcom, ycom, area, Ix, Iy, Ixy] = polyCOM(points)

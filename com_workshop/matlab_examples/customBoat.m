@@ -190,6 +190,9 @@ function customBoat()
                 componentDensityRatio = densityRatio;
                 material = 'Gazebo/Gray';
             end
+            % TODO: could revamp this to use what we do for 3d boats, but
+            % so far it doesn't seem necessary and might introduce
+            % additional bugs
             polyline(doc, modelElem, ['polycomponent',num2str(i)], componentDensityRatio, boatLength, regions{i}, material, true);
             if i == 1
                 % use this as the parent for all fixed joints

@@ -28,7 +28,7 @@ function customBoat3d()
         plotAVSCurve(allPoints);
     end
 
-    function [torque,d,CoM] = getWaterLineHelper(theta, L, CoM, densityRatioWeightedVolume, allSlices, deltaZ)
+    function [torque,d,CoM] = getWaterLineHelper(theta, CoM, densityRatioWeightedVolume, allSlices, deltaZ)
         mass = densityRatioWeightedVolume*1000;%Kg
         volume_displaced_at_eq = densityRatioWeightedVolume;
 
@@ -144,7 +144,6 @@ function customBoat3d()
             allSlices{end+1} = vertices;
             
             [regions isBallast areas] = splitHullAtBallastLevel(polyChopped);
-
             for i = 1 : length(isBallast)
                 [~,xcomRegion,ycomRegion] = cumulativeArea(regions{i},Inf); % Inf means use the whole polygon
                 if isBallast(i)
@@ -159,7 +158,7 @@ function customBoat3d()
         CoM = CoM / totalWeightedVolume;
 
         for i = 1:length(thetas)
-            [torques(i),waterlines(i)] = getWaterLineHelper(thetas(i),boatLength,CoM,totalWeightedVolume,allSlices,deltaz);
+            [torques(i),waterlines(i)] = getWaterLineHelper(thetas(i),CoM,totalWeightedVolume,allSlices,deltaz);
         end
         set(CoMPlot,'XData',CoM(1),'YData',CoM(2));
         set(avsPlot,'YData',torques);
@@ -170,7 +169,8 @@ function customBoat3d()
             pause(2);
         end
         x = eventDat.IntersectionPoint(1);
-        [~,waterline,~] = getWaterLineHelper(x,boatLength,CoM,totalWeightedArea,allPoints);
+        deltaz = Z(2)-Z(1);
+        [~,waterline,~] = getWaterLineHelper(x,CoM,totalWeightedVolume,allSlices,deltaz);
         msg = rosmessage(updateModelSvc);
         msg.ModelState.ModelName = 'customboat';
         msg.ModelState.Pose.Position.Z = -waterline;
@@ -230,6 +230,10 @@ function customBoat3d()
         modelElem = doc.createElement('model');
         sdfElem.appendChild(modelElem);
         modelElem.setAttribute('name', 'customboat');
+        allRegions = {};
+        allMaterials = {};
+        allComponentDensityRatios = [];
+        allZs = [];
         for slice=1:length(Z)
             polyLofted = poly.translate(0, loftCurve(slice));
             polyChopped = chopOffAreaAboveDeck(polyLofted);
@@ -237,6 +241,7 @@ function customBoat3d()
                 continue
             end
             [regions isBallast ~] = splitHullAtBallastLevel(polyChopped);
+            allRegions = [allRegions regions];
             for i = 1 : length(regions)
                 if isBallast(i)
                     componentDensityRatio = ballastDensityRatio;
@@ -245,28 +250,12 @@ function customBoat3d()
                     componentDensityRatio = densityRatio;
                     material = 'Gazebo/Gray';
                 end
-                linkName = ['polycomponent',num2str(slice),'_',num2str(i)];
-                polyline(doc, modelElem, linkName, componentDensityRatio, Z(2)-Z(1), regions{i}, material, true, ['0 0 ',num2str(Z(slice)),' 0 0 0']);
-                if ~exist('baseLink','var')
-                    % use this as the parent for all fixed joints
-                    baseLink = linkName;
-                elseif strcmp(baseLink,linkName) == 0 % not the baselink
-                    % add a joint to fuse the two regions together
-                    joint = doc.createElement('joint');
-                    modelElem.appendChild(joint);
-                    joint.setAttribute('name',['joint',linkName]);
-                    joint.setAttribute('type','fixed');
-
-                    parentLink = doc.createElement('parent');
-                    parentLink.setTextContent(baseLink);
-                    joint.appendChild(parentLink);
-                    childLink = doc.createElement('child');
-                    childLink.setTextContent(linkName);
-                    joint.appendChild(childLink);
-                    baseLink = linkName;
-                end
+                allComponentDensityRatios(end+1) = componentDensityRatio;
+                allMaterials{end+1} = material;
+                allZs(end+1) = Z(slice);
             end
         end
+        polyline(doc, modelElem, 'customBoat', allComponentDensityRatios, Z(2)-Z(1), allRegions, allMaterials, true, allZs);
         if shouldPause
             msg = rosmessage(pauseSvc);
             call(pauseSvc, msg);
@@ -305,11 +294,13 @@ function customBoat3d()
     % density ratio of ballast is 1.24 (solid PLA)
     ballastDensityRatio = 1.24;
     % the boat length (this is the extrusion dimension)
-    boatLength = 10;
+    boatLength = 2;
     
     longitudinalShapeParameter = 2;
-    Z = linspace(-boatLength/2, boatLength/2, 51);
-    loftCurve = abs(2.*Z./boatLength).^longitudinalShapeParameter;
+    Z = linspace(-boatLength/2, boatLength/2, 50);
+    Z = Z - (Z(2)-Z(1))/2;  % maintain a Z center of mass of 0
+
+    loftCurve = abs(2.*(Z + (Z(2)-Z(1))/2)./boatLength).^longitudinalShapeParameter;
     
 	f = figure('CloseRequestFcn',@closeRequest);
     subplot(7,1,4:6);
@@ -322,6 +313,7 @@ function customBoat3d()
     endPoint = [0 1];
     userPoints = [];
     allPoints = [startPoint; endPoint];
+    allSlices = {};
     % plot the vertices
     s = scatter(allPoints(:,1), allPoints(:,2),'MarkerFaceColor', uint8([128 128 128]), 'MarkerEdgeColor', uint8([64 64 64]));
     hold on;
@@ -333,7 +325,7 @@ function customBoat3d()
     CoM = [(startPoint(1)+endPoint(1))/2, (startPoint(2)+endPoint(2))/2];
     % this is the cross-sectional area weighted by the density of each part
     % of the cross section.  The boat's mass is L*totalWeightedArea*1000
-    totalWeightedArea = 0;
+    totalWeightedVolume = 0;
     % show the CoM
     CoMPlot = plot(CoM(1),CoM(2),'b.');
     set(CoMPlot,'MarkerSize',25);
