@@ -171,6 +171,7 @@ function customBoat3d()
         x = eventDat.IntersectionPoint(1);
         deltaz = Z(2)-Z(1);
         [~,waterline,~] = getWaterLineHelper(x,CoM,totalWeightedVolume,allSlices,deltaz);
+
         msg = rosmessage(updateModelSvc);
         msg.ModelState.ModelName = 'customboat';
         msg.ModelState.Pose.Position.Z = -waterline;
@@ -326,6 +327,7 @@ function customBoat3d()
     % this is the cross-sectional area weighted by the density of each part
     % of the cross section.  The boat's mass is L*totalWeightedArea*1000
     totalWeightedVolume = 0;
+
     % show the CoM
     CoMPlot = plot(CoM(1),CoM(2),'b.');
     set(CoMPlot,'MarkerSize',25);
