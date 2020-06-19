@@ -52,6 +52,7 @@ function customBoat3d()
     end
 
     function [regions isBallast areas] = splitHullAtBallastLevel(poly)
+        edgeLengthRemovalThreshold = 10^-4;
         polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[ballastLevel,ballastLevel,ballastLevel+10^-5,ballastLevel+10^-5,ballastLevel]);
         r = polySplit.regions;
         regions = {};
@@ -65,28 +66,58 @@ function customBoat3d()
             % we would predict but just a little bit larger
 
             if r(i).area > 2*(maxX - minX)*10^-5
-                % make sure boundary is counterclockwise by
-                % checking if the area is positive
                 vertices = [r(i).Vertices; r(i).Vertices(1,:)];
-                area = 0;
-                for j = 1:size(vertices,1)-1
-                    area = area + 0.5*(vertices(j,1)*vertices(j+1,2)-vertices(j+1,1)*vertices(j,2));
+                % the region can still have multiple subregions when
+                % connected (I'm not sure why this is)
+                resplit = polyshape(vertices).regions;
+                for j = 1 : length(resplit)
+                    % make sure boundary is counterclockwise by
+                    % checking if the area is positive
+                    vertices = [resplit(j).Vertices; resplit(j).Vertices(1,:)];
+                    area = 0;
+                    for k = 1:size(vertices,1)-1
+                        area = area + 0.5*(vertices(k,1)*vertices(k+1,2)-vertices(k+1,1)*vertices(k,2));
+                    end
+                    if area < 0
+                        % polygon area was clockwise, make it counter
+                        % clockwise
+                        vertices = vertices(end:-1:1,:);
+                        area = -area;
+                    end
+                    % TODO: this might not be necessary
+                    % as a final check, remove any edges that are too small
+                    edges = vertices(2:end,:) - vertices(1:end-1,:);
+                    edgesToKeep = sqrt(sum(edges.^2,2)) > edgeLengthRemovalThreshold;
+                    newVertices = [vertices(1,:);...
+                                vertices(find(edgesToKeep(1:end-2))+1,:)];
+                    if edgesToKeep(end-1) & edgesToKeep(end)
+                        newVertices(end+1,:) = vertices(end-1,:);
+                    end
+                    % TODO this isn't quite right as adding the the edge
+                    % from the penultimate vertex to the starting vertex
+                    % still might be too small
+                    newVertices(end+1,:) = vertices(1,:);
+                    % Superhack to remove a degenerate case where the
+                    % region should be subdivided into multiple, but
+                    % polyline doesn't detect it as such
+                    % To get around it, we nudge down any vertices that
+                    % touch the deck by a small amount
+                    % TODO: replace with something sane
+                    newVertices(find(abs(newVertices(2:end-1,end)-1)<10^-5)+1,end) = 1+10^-5;
+                    vertices = newVertices;
+                    if size(vertices,1) < 4
+                        continue;
+                    end
+                    areas(end+1) = area;
+                    % check if the region is in the ballast zone or not
+                    % (10^-5 is a fudge factor)
+                    if max(vertices(:,end))<=ballastLevel+10^-5
+                        isBallast(end+1) = true;
+                    else
+                        isBallast(end+1) = false;
+                    end
+                    regions{end+1} = vertices;
                 end
-                if area < 0
-                    % polygon area was clockwise, make it counter
-                    % clockwise
-                    vertices = vertices(end:-1:1,:);
-                    area = -area;
-                end
-                areas(end+1) = area;
-                % check if the region is in the ballast zone or not
-                % (10^-5 is a fudge factor)
-                if max(vertices(:,end))<=ballastLevel+10^-5
-                    isBallast(end+1) = true;
-                else
-                    isBallast(end+1) = false;
-                end
-                regions{end+1} = vertices;
             end
         end
     end
@@ -96,7 +127,7 @@ function customBoat3d()
         polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[deckLevel,deckLevel,deckLevel+10^-5,deckLevel+10^-5,deckLevel]);
         regions = polySplit.regions;
         for r=1:length(regions)
-            if abs(deckLevel-max(regions(1).Vertices(:,2)))<10^-6
+            if abs(deckLevel-max(regions(r).Vertices(:,2)))<10^-6
                 polyChopped = regions(r);
                 return
             end
@@ -280,6 +311,7 @@ function customBoat3d()
                 set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
          end
     end
+
     % track whether the boat has been spawned in Gazebo
     spawned = false;
     % y-limits of hull cross section visualization
@@ -295,13 +327,24 @@ function customBoat3d()
     % density ratio of ballast is 1.24 (solid PLA)
     ballastDensityRatio = 1.24;
     % the boat length (this is the extrusion dimension)
-    boatLength = 2;
+    boatLength = 6;
     
-    longitudinalShapeParameter = 2;
-    Z = linspace(-boatLength/2, boatLength/2, 26);
+    longitudinalShapeParameter = 4;
+    Z = linspace(-boatLength/2, boatLength/2, 200);
     Z = Z - (Z(2)-Z(1))/2;  % maintain a Z center of mass of 0
 
     loftCurve = abs(2.*(Z + (Z(2)-Z(1))/2)./boatLength).^longitudinalShapeParameter;
+    getPhysicsClient = rossvcclient('/gazebo/get_physics_properties');
+    m = rosmessage(getPhysicsClient);
+    physicsProperties = call(getPhysicsClient, m);
+
+    setPhysicsClient = rossvcclient('/gazebo/set_physics_properties');
+    m = rosmessage(setPhysicsClient);
+    m.TimeStep = 0.01;
+    m.MaxUpdateRate = 100;
+    m.Gravity = physicsProperties.Gravity;
+    m.OdeConfig = physicsProperties.OdeConfig;
+    call(setPhysicsClient, m);
     
 	f = figure('CloseRequestFcn',@closeRequest);
     subplot(7,1,4:6);
