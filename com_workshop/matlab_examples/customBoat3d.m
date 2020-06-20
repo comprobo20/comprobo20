@@ -102,7 +102,10 @@ function customBoat3d()
             if unionPoly.area == 0
                 continue;
             end
-            allSlices{end+1} = getCCWVertices(unionPoly);
+            regions = unionPoly.regions;
+            for k=1:length(regions)
+                allSlices{end+1} = getCCWVertices(regions(k));
+            end
             regions = polyshape(ballastVerts).regions;
             for k=1:length(regions)
                 [~,xcomRegion,ycomRegion] = cumulativeArea(getCCWVertices(regions(k)),Inf); % Inf means use the whole polygon
