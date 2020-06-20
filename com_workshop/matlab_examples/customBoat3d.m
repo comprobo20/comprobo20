@@ -51,98 +51,19 @@ function customBoat3d()
         torque = torque(1);
     end
 
-    function [regions isBallast areas] = splitHullAtBallastLevel(poly)
-        % TODO: could redo this using the technique of fusing strips
-        edgeLengthRemovalThreshold = 10^-4;
-        polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[ballastLevel,ballastLevel,ballastLevel+10^-5,ballastLevel+10^-5,ballastLevel]);
-        r = polySplit.regions;
-        regions = {};
-        isBallast = [];
-        areas = [];
-        for i = 1 : length(r)
-            % this if statement prevents adding regions that are
-            % either not in the boat (e.g., the boundary doesn't
-            % intersect the boat) or too small.  The factor of 2 is
-            % a fudge factor since the area was often close to what
-            % we would predict but just a little bit larger
-
-            if r(i).area > 2*(maxX - minX)*10^-5
-                vertices = [r(i).Vertices; r(i).Vertices(1,:)];
-                % the region can still have multiple subregions when
-                % connected (I'm not sure why this is)
-                resplit = polyshape(vertices).regions;
-                for j = 1 : length(resplit)
-                    % make sure boundary is counterclockwise by
-                    % checking if the area is positive
-                    vertices = [resplit(j).Vertices; resplit(j).Vertices(1,:)];
-                    area = 0;
-                    for k = 1:size(vertices,1)-1
-                        area = area + 0.5*(vertices(k,1)*vertices(k+1,2)-vertices(k+1,1)*vertices(k,2));
-                    end
-                    if area < 0
-                        % polygon area was clockwise, make it counter
-                        % clockwise
-                        vertices = vertices(end:-1:1,:);
-                        area = -area;
-                    end
-                    % TODO: this might not be necessary
-                    % as a final check, remove any edges that are too small
-                    edges = vertices(2:end,:) - vertices(1:end-1,:);
-                    edgesToKeep = sqrt(sum(edges.^2,2)) > edgeLengthRemovalThreshold;
-                    newVertices = [vertices(1,:);...
-                                vertices(find(edgesToKeep(1:end-2))+1,:)];
-                    if edgesToKeep(end-1) & edgesToKeep(end)
-                        newVertices(end+1,:) = vertices(end-1,:);
-                    end
-                    % TODO this isn't quite right as adding the the edge
-                    % from the penultimate vertex to the starting vertex
-                    % still might be too small
-                    newVertices(end+1,:) = vertices(1,:);
-                    % Superhack to remove a degenerate case where the
-                    % region should be subdivided into multiple, but
-                    % polyline doesn't detect it as such
-                    % To get around it, we nudge down any vertices that
-                    % touch the deck by a small amount
-                    % TODO: replace with something sane
-                    newVertices(find(abs(newVertices(2:end-1,end)-1)<10^-5)+1,end) = 1+10^-5;
-                    vertices = newVertices;
-                    if size(vertices,1) < 4
-                        continue;
-                    end
-                    areas(end+1) = area;
-                    % check if the region is in the ballast zone or not
-                    % (10^-5 is a fudge factor)
-                    if max(vertices(:,end))<=ballastLevel+10^-5
-                        isBallast(end+1) = true;
-                    else
-                        isBallast(end+1) = false;
-                    end
-                    regions{end+1} = vertices;
-                end
-            end
+    function vertices = getCCWVertices(myPoly)
+        % make sure boundary is counterclockwise by
+        % checking if the area is positive
+        vertices = [myPoly.Vertices; myPoly.Vertices(1,:)];
+        area = 0;
+        for j = 1:size(vertices,1)-1
+             area = area + 0.5*(vertices(j,1)*vertices(j+1,2)-vertices(j+1,1)*vertices(j,2));
         end
-    end
-
-    function polyChopped = chopOffAreaAboveDeck(poly)
-        deckLevel = maxY;
-        polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[deckLevel,deckLevel,deckLevel+10^-5,deckLevel+10^-5,deckLevel]);
-        regions = polySplit.regions;
-        belowDeckRegions = {};
-        deckSpan = [];
-        for r=1:length(regions)
-            if abs(deckLevel-max(regions(r).Vertices(:,2)))<10^-6
-                belowDeckRegions{end+1} = regions(r);
-                atTop = regions(r).Vertices(abs(deckLevel-regions(r).Vertices(:,end))<10^-5,1);
-                if isempty(deckSpan)
-                    deckSpan(1) = min(atTop);
-                    deckSpan(2) = max(atTop);
-                else
-                    deckSpan(1) = min(atTop(1), deckSpan(1));
-                    deckSpan(2) = max(atTop(2), deckSpan(2));
-                end
-            end
+        if area < 0
+            % polygon area was clockwise, make it counterclockwise
+            vertices = vertices(end:-1:1,:);
+            area = -area;
         end
-        polyChopped = [belowDeckRegions{:}];
     end
 
     function CoM = plotAVSCurve(allPoints)
@@ -163,38 +84,36 @@ function customBoat3d()
         CoM = [0 0];
         allSlices = {};
         for slice=1:length(Z)
-            polyLofted = poly.translate(0, loftCurve(slice));
-            polyChoppedAll = chopOffAreaAboveDeck(polyLofted);
-            for k=1:length(polyChoppedAll)
-                polyChopped = polyChoppedAll(k);
-                if polyChopped.area == 0
-                    continue
-                end
-                % make sure boundary is counterclockwise by
-                % checking if the area is positive
-                vertices = [polyChopped.Vertices; polyChopped.Vertices(1,:)];
-                area = 0;
-                for j = 1:size(vertices,1)-1
-                     area = area + 0.5*(vertices(j,1)*vertices(j+1,2)-vertices(j+1,1)*vertices(j,2));
-                end
-                if area < 0
-                    % polygon area was clockwise, make it counterclockwise
-                    vertices = vertices(end:-1:1,:);
-                    area = -area;
-                end
-                allSlices{end+1} = vertices;
-
-                [regions isBallast areas] = splitHullAtBallastLevel(polyChopped);
-                for i = 1 : length(isBallast)
-                    [~,xcomRegion,ycomRegion] = cumulativeArea(regions{i},Inf); % Inf means use the whole polygon
-                    if isBallast(i)
-                        regionDensity = ballastDensityRatio;
-                    else
-                        regionDensity = densityRatio;
-                    end
-                    CoM = CoM + [xcomRegion ycomRegion]*areas(i)*regionDensity*deltaz;
-                    totalWeightedVolume = totalWeightedVolume + areas(i)*regionDensity*deltaz;
-                end
+            loftedPoints = [allPoints(:,1) allPoints(:,2) + loftCurve(slice)];
+            % redo so the polygon starts at the lowest point
+            loftedPoints = loftedPoints(1:end-1,:);
+            [minlevel, minind] = min(loftedPoints(:,2));
+            loftedPoints = [loftedPoints(minind:end,:); loftedPoints(1:minind,:)];
+            if minlevel < ballastLevel
+                partitioned = chopPolygon(loftedPoints, [ballastLevel maxY]);
+                ballastVerts = partitioned{1};
+                hullVerts = partitioned{2};
+            else
+                partitioned = chopPolygon(loftedPoints, maxY);
+                ballastVerts = zeros(0,2);
+                hullVerts = partitioned{1};
+            end
+            unionPoly = union(polyshape(hullVerts), polyshape(ballastVerts));
+            if unionPoly.area == 0
+                continue;
+            end
+            allSlices{end+1} = getCCWVertices(unionPoly);
+            regions = polyshape(ballastVerts).regions;
+            for k=1:length(regions)
+                [~,xcomRegion,ycomRegion] = cumulativeArea(getCCWVertices(regions(k)),Inf); % Inf means use the whole polygon
+                CoM = CoM + [xcomRegion ycomRegion]*regions(k).area*ballastDensityRatio*deltaz;
+                totalWeightedVolume = totalWeightedVolume + regions(k).area*ballastDensityRatio*deltaz;
+            end
+            regions = polyshape(hullVerts).regions;
+            for k=1:length(regions)
+                [~,xcomRegion,ycomRegion] = cumulativeArea(getCCWVertices(regions(k)),Inf); % Inf means use the whole polygon
+                CoM = CoM + [xcomRegion ycomRegion]*regions(k).area*densityRatio*deltaz;
+                totalWeightedVolume = totalWeightedVolume + regions(k).area*densityRatio*deltaz;
             end
         end
         CoM = CoM / totalWeightedVolume;
@@ -278,27 +197,33 @@ function customBoat3d()
         allComponentDensityRatios = [];
         allZs = [];
         for slice=1:length(Z)
-            polyLofted = poly.translate(0, loftCurve(slice));
-            allPolyChopped = chopOffAreaAboveDeck(polyLofted);
-            for k=1:length(allPolyChopped)
-                polyChopped = allPolyChopped(k);
-                if polyChopped.area == 0
-                    continue
-                end
-                [regions isBallast ~] = splitHullAtBallastLevel(polyChopped);
-                allRegions = [allRegions regions];
-                for i = 1 : length(regions)
-                    if isBallast(i)
-                        componentDensityRatio = ballastDensityRatio;
-                        material = 'Gazebo/Red';
-                    else
-                        componentDensityRatio = densityRatio;
-                        material = 'Gazebo/Gray';
-                    end
-                    allComponentDensityRatios(end+1) = componentDensityRatio;
-                    allMaterials{end+1} = material;
-                    allZs(end+1) = Z(slice);
-                end
+            loftedPoints = [allPoints(:,1) allPoints(:,2) + loftCurve(slice)];
+            % redo so the polygon starts at the lowest point
+            loftedPoints = loftedPoints(1:end-1,:);
+            [minlevel, minind] = min(loftedPoints(:,2));
+            loftedPoints = [loftedPoints(minind:end,:); loftedPoints(1:minind,:)];
+            if minlevel < ballastLevel
+                partitioned = chopPolygon(loftedPoints, [ballastLevel maxY]);
+                ballastVerts = partitioned{1};
+                hullVerts = partitioned{2};
+            else
+                partitioned = chopPolygon(loftedPoints, maxY);
+                ballastVerts = zeros(0,2);
+                hullVerts = partitioned{1};
+            end
+            regions = polyshape(ballastVerts).regions;
+            for k=1:length(regions)
+                allRegions{end+1} = getCCWVertices(regions(k));
+                allComponentDensityRatios(end+1) = ballastDensityRatio;
+                allMaterials{end+1} = 'Gazebo/Red';
+                allZs(end+1) = Z(slice);
+            end
+            regions = polyshape(hullVerts).regions;
+            for k=1:length(regions)
+                allRegions{end+1} = getCCWVertices(regions(k));
+                allComponentDensityRatios(end+1) = densityRatio;
+                allMaterials{end+1} = 'Gazebo/Gray';
+                allZs(end+1) = Z(slice);
             end
         end
         polyline(doc, modelElem, 'customBoat', allComponentDensityRatios, Z(2)-Z(1), allRegions, allMaterials, true, allZs);
