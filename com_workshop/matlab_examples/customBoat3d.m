@@ -52,6 +52,8 @@ function customBoat3d()
     end
 
     function [regions isBallast areas] = splitHullAtBallastLevel(poly)
+        % TODO: redo this using the techinque of fusing strips in the
+        % chopOffAreaBelowDeck function
         edgeLengthRemovalThreshold = 10^-4;
         polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[ballastLevel,ballastLevel,ballastLevel+10^-5,ballastLevel+10^-5,ballastLevel]);
         r = polySplit.regions;
@@ -126,15 +128,31 @@ function customBoat3d()
         deckLevel = maxY;
         polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[deckLevel,deckLevel,deckLevel+10^-5,deckLevel+10^-5,deckLevel]);
         regions = polySplit.regions;
+        belowDeckRegions = {};
+        deckSpan = [];
         for r=1:length(regions)
             if abs(deckLevel-max(regions(r).Vertices(:,2)))<10^-6
-                polyChopped = regions(r);
-                return
+                belowDeckRegions{end+1} = regions(r);
+                atTop = regions(r).Vertices(abs(deckLevel-regions(r).Vertices(:,end))<10^-5,1);
+                if isempty(deckSpan)
+                    deckSpan(1) = min(atTop);
+                    deckSpan(2) = max(atTop);
+                else
+                    deckSpan(1) = min(atTop(1), deckSpan(1));
+                    deckSpan(2) = max(atTop(2), deckSpan(2));
+                end
             end
         end
-        % return an empty polygon (e.g., if the loft reduces the polygon to
-        % nothing
-        polyChopped = polyshape();
+
+        if isempty(belowDeckRegions)
+            % the loft reduced the polygon to nothing
+            polyChopped = polyshape();
+        else
+            % add a strip at the top to fuse the regions into one
+            joiningStrip = polyshape([deckSpan(1),deckSpan(2),deckSpan(2),deckSpan(1)],[deckLevel-10^-5, deckLevel-10^-5, deckLevel, deckLevel]);
+            belowDeckRegions{end+1} = joiningStrip;
+            polyChopped = union([belowDeckRegions{:}]);
+        end
     end
 
     function CoM = plotAVSCurve(allPoints)
