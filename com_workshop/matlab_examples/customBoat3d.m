@@ -52,8 +52,7 @@ function customBoat3d()
     end
 
     function [regions isBallast areas] = splitHullAtBallastLevel(poly)
-        % TODO: redo this using the techinque of fusing strips in the
-        % chopOffAreaBelowDeck function
+        % TODO: could redo this using the technique of fusing strips
         edgeLengthRemovalThreshold = 10^-4;
         polySplit = addboundary(poly,[minX,maxX,maxX,minX,minX],[ballastLevel,ballastLevel,ballastLevel+10^-5,ballastLevel+10^-5,ballastLevel]);
         r = polySplit.regions;
@@ -143,16 +142,7 @@ function customBoat3d()
                 end
             end
         end
-
-        if isempty(belowDeckRegions)
-            % the loft reduced the polygon to nothing
-            polyChopped = polyshape();
-        else
-            % add a strip at the top to fuse the regions into one
-            joiningStrip = polyshape([deckSpan(1),deckSpan(2),deckSpan(2),deckSpan(1)],[deckLevel-10^-5, deckLevel-10^-5, deckLevel, deckLevel]);
-            belowDeckRegions{end+1} = joiningStrip;
-            polyChopped = union([belowDeckRegions{:}]);
-        end
+        polyChopped = [belowDeckRegions{:}];
     end
 
     function CoM = plotAVSCurve(allPoints)
@@ -174,34 +164,37 @@ function customBoat3d()
         allSlices = {};
         for slice=1:length(Z)
             polyLofted = poly.translate(0, loftCurve(slice));
-            polyChopped = chopOffAreaAboveDeck(polyLofted);
-            if polyChopped.area == 0
-                continue
-            end
-            % make sure boundary is counterclockwise by
-            % checking if the area is positive
-            vertices = [polyChopped.Vertices; polyChopped.Vertices(1,:)];
-            area = 0;
-            for j = 1:size(vertices,1)-1
-                 area = area + 0.5*(vertices(j,1)*vertices(j+1,2)-vertices(j+1,1)*vertices(j,2));
-            end
-            if area < 0
-                % polygon area was clockwise, make it counterclockwise
-                vertices = vertices(end:-1:1,:);
-                area = -area;
-            end
-            allSlices{end+1} = vertices;
-            
-            [regions isBallast areas] = splitHullAtBallastLevel(polyChopped);
-            for i = 1 : length(isBallast)
-                [~,xcomRegion,ycomRegion] = cumulativeArea(regions{i},Inf); % Inf means use the whole polygon
-                if isBallast(i)
-                    regionDensity = ballastDensityRatio;
-                else
-                    regionDensity = densityRatio;
+            polyChoppedAll = chopOffAreaAboveDeck(polyLofted);
+            for k=1:length(polyChoppedAll)
+                polyChopped = polyChoppedAll(k);
+                if polyChopped.area == 0
+                    continue
                 end
-                CoM = CoM + [xcomRegion ycomRegion]*areas(i)*regionDensity*deltaz;
-                totalWeightedVolume = totalWeightedVolume + areas(i)*regionDensity*deltaz;
+                % make sure boundary is counterclockwise by
+                % checking if the area is positive
+                vertices = [polyChopped.Vertices; polyChopped.Vertices(1,:)];
+                area = 0;
+                for j = 1:size(vertices,1)-1
+                     area = area + 0.5*(vertices(j,1)*vertices(j+1,2)-vertices(j+1,1)*vertices(j,2));
+                end
+                if area < 0
+                    % polygon area was clockwise, make it counterclockwise
+                    vertices = vertices(end:-1:1,:);
+                    area = -area;
+                end
+                allSlices{end+1} = vertices;
+
+                [regions isBallast areas] = splitHullAtBallastLevel(polyChopped);
+                for i = 1 : length(isBallast)
+                    [~,xcomRegion,ycomRegion] = cumulativeArea(regions{i},Inf); % Inf means use the whole polygon
+                    if isBallast(i)
+                        regionDensity = ballastDensityRatio;
+                    else
+                        regionDensity = densityRatio;
+                    end
+                    CoM = CoM + [xcomRegion ycomRegion]*areas(i)*regionDensity*deltaz;
+                    totalWeightedVolume = totalWeightedVolume + areas(i)*regionDensity*deltaz;
+                end
             end
         end
         CoM = CoM / totalWeightedVolume;
@@ -286,23 +279,26 @@ function customBoat3d()
         allZs = [];
         for slice=1:length(Z)
             polyLofted = poly.translate(0, loftCurve(slice));
-            polyChopped = chopOffAreaAboveDeck(polyLofted);
-            if polyChopped.area == 0
-                continue
-            end
-            [regions isBallast ~] = splitHullAtBallastLevel(polyChopped);
-            allRegions = [allRegions regions];
-            for i = 1 : length(regions)
-                if isBallast(i)
-                    componentDensityRatio = ballastDensityRatio;
-                    material = 'Gazebo/Red';
-                else
-                    componentDensityRatio = densityRatio;
-                    material = 'Gazebo/Gray';
+            allPolyChopped = chopOffAreaAboveDeck(polyLofted);
+            for k=1:length(allPolyChopped)
+                polyChopped = allPolyChopped(k);
+                if polyChopped.area == 0
+                    continue
                 end
-                allComponentDensityRatios(end+1) = componentDensityRatio;
-                allMaterials{end+1} = material;
-                allZs(end+1) = Z(slice);
+                [regions isBallast ~] = splitHullAtBallastLevel(polyChopped);
+                allRegions = [allRegions regions];
+                for i = 1 : length(regions)
+                    if isBallast(i)
+                        componentDensityRatio = ballastDensityRatio;
+                        material = 'Gazebo/Red';
+                    else
+                        componentDensityRatio = densityRatio;
+                        material = 'Gazebo/Gray';
+                    end
+                    allComponentDensityRatios(end+1) = componentDensityRatio;
+                    allMaterials{end+1} = material;
+                    allZs(end+1) = Z(slice);
+                end
             end
         end
         polyline(doc, modelElem, 'customBoat', allComponentDensityRatios, Z(2)-Z(1), allRegions, allMaterials, true, allZs);
