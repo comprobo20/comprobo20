@@ -1,4 +1,9 @@
-function makeLoftedMesh(x, y, deckHeight, Zs, loftCurve)
+function stl_file = makeLoftedMesh(x, y, deckHeight, Zs, loftCurve, visualize)
+if nargin < 6
+    visualize = true;
+end
+% hack to make sure we have a unique mesh everytime
+stl_file = [char(java.util.UUID.randomUUID.toString()),'.stl'];
 points = [x(1:end-1) y(1:end-1)];
 npoints = size(points,1);
 
@@ -49,13 +54,16 @@ end
 % slice off the deck
 planes.n = [0 1 0];
 planes.r = [0 deckHeight 0];
-polygons = mesh_xsections( verts, faces, planes, [], 2 );
-figure;
-
+polygons = mesh_xsections( verts, faces, planes, []);
+if visualize
+    figure;
+end
 for i=1:size(polygons{1},1)
     p = polyshape(polygons{1}{i}(:,[1 3]));
-    plot(p);
-    hold on;
+    if visualize
+        plot(p);
+        hold on;
+    end
     T = triangulation(p);
 
     vertOffset = size(verts,1);
@@ -152,14 +160,16 @@ verts = verts(u,:);
 [verts,~,mappings] = unique(verts,'rows');
 faces = mappings(faces);
 
-figure;
-view(3);
-axis equal;
-p = patch('Faces',faces,'Vertices',verts);
-p.EdgeColor = [1 0 0];
+if visualize
+    figure;
+    view(3);
+    axis equal;
+    p = patch('Faces',faces,'Vertices',verts);
+    p.EdgeColor = [1 0 0];
+end
 disp(['Num vertices ', num2str(size(verts,1))]);
 disp(['Num faces ', num2str(size(faces,1))]);
 
 TR = triangulation(faces, verts);
-stlwrite(TR, 'loftedmesh.stl');
+stlwrite(TR, stl_file);
 end

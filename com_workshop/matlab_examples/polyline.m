@@ -1,10 +1,21 @@
-function polyline(doc, modelElem, name, componentDensityRatios, height, regions, materials, isBoat, Z)
+function polyline(doc, modelElem, name, componentDensityRatios, height, regions, materials, isBoat, Z, meshBoatSTLPath)
+    % TODO: need to refactor the part about the mesh.  The reason for the
+    % overlap currently is from the need to calculate the intertial
+    % parameters
     if nargin < 7
         materials = {'Gazebo/OrangeTransparentOverlay'};
     end
     if nargin < 8
         isBoat = false;
     end
+    if nargin < 9
+        meshBoatSTLPath = '';
+    else
+        % hack to work with parallels on my machine
+        startHomeRelativePath = strfind(meshBoatSTLPath,'pruvolo')+length('pruvolo');
+        meshBoatSTLPath = ['/media/psf/Home',meshBoatSTLPath(startHomeRelativePath:end)];
+    end
+    useSTLOverride = ~isempty(meshBoatSTLPath);
     % precision of output (extra digits help when polygon points are close
     % together)
     num2strPrecision = 10;
@@ -69,7 +80,7 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
                                                  -shift(1)*shift(3), -shift(2)*shift(3), shift(1)^2+shift(2)^2];
         Ishifted = Ic + AugmentationDueToNewCoM;
         IOverall = IOverall + Ishifted;
-     end
+    end
 
     Ixx = IOverall(1,1);
     Ixy = IOverall(1,2);
@@ -80,27 +91,18 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
     polyline = doc.createElement('link');
     modelElem.appendChild(polyline);
     polyline.setAttribute('name', name);
-    for i = 1:length(regions)
-        points = regions{i};
+
+    if useSTLOverride
         visual = doc.createElement('visual');
-        % using a unique ID fixes a caching problem with the gazebo GUI
         visual.setAttribute('name', java.util.UUID.randomUUID.toString());
         polyline.appendChild(visual);
-        visualPose = doc.createElement('pose');
-        visual.appendChild(visualPose);
-        visualPose.setTextContent(['0 0 ',num2str(Z(i), num2strPrecision),' 0 0 0']);
         visualGeometry = doc.createElement('geometry');
         visual.appendChild(visualGeometry);
-        geometryPolyline = doc.createElement('polyline');
-        visualGeometry.appendChild(geometryPolyline);
-        for j = 1:size(points,1)
-            polylinePoint = doc.createElement('point');
-            geometryPolyline.appendChild(polylinePoint);
-            polylinePoint.setTextContent([num2str(points(j,1), num2strPrecision),' ',num2str(points(j,2), num2strPrecision)]);
-        end
-        polylineHeight = doc.createElement('height');
-        geometryPolyline.appendChild(polylineHeight);
-        polylineHeight.setTextContent(num2str(height, num2strPrecision));
+        meshElem = doc.createElement('mesh');
+        visualGeometry.appendChild(meshElem);
+        uriElem = doc.createElement('uri');
+        meshElem.appendChild(uriElem);
+        uriElem.setTextContent(['file://',meshBoatSTLPath]);
         visualMaterial = doc.createElement('material');
         visual.appendChild(visualMaterial);
         scriptMaterial = doc.createElement('script');
@@ -110,31 +112,22 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
         uriMaterial.setTextContent('file://media/materials/scripts/gazebo.material');
         nameMaterial = doc.createElement('name');
         scriptMaterial.appendChild(nameMaterial);
-        nameMaterial.setTextContent(materials{i});
-    end
-    for i=1:length(regions)
-        points = regions{i};
+        nameMaterial.setTextContent('Gazebo/Gray');
+
         collision = doc.createElement('collision');
         collision.setAttribute('name', java.util.UUID.randomUUID.toString());
         polyline.appendChild(collision);
-        collisionPose = doc.createElement('pose');
-        collision.appendChild(collisionPose);
-        collisionPose.setTextContent(['0 0 ',num2str(Z(i), num2strPrecision),' 0 0 0']);
         collisionGeometry = doc.createElement('geometry');
         collision.appendChild(collisionGeometry);
-        geometryPolyline = doc.createElement('polyline');
-        collisionGeometry.appendChild(geometryPolyline);
-        for j = 1:size(points,1)
-            polylinePoint = doc.createElement('point');
-            geometryPolyline.appendChild(polylinePoint);
-            polylinePoint.setTextContent([num2str(points(j,1), num2strPrecision),' ',num2str(points(j,2), num2strPrecision)]);
-        end
-        polylineHeight = doc.createElement('height');
-        geometryPolyline.appendChild(polylineHeight);
-        polylineHeight.setTextContent(num2str(height, num2strPrecision));
+        collisionMesh = doc.createElement('mesh');
+        collisionGeometry.appendChild(collisionMesh);
+        collisionUriElem = doc.createElement('uri');
+        collisionMesh.appendChild(collisionUriElem);
+        collisionUriElem.setTextContent(['file://',meshBoatSTLPath]);
 
         surface = doc.createElement('surface');
         collision.appendChild(surface);
+        % TODO: factor out contact
         contact = doc.createElement('contact');
         surface.appendChild(contact);
         collideBitmask = doc.createElement('collide_bitmask');
@@ -150,6 +143,78 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
         mu2 = doc.createElement('mu2');
         odeNode.appendChild(mu2);
         mu2.setTextContent('50');
+    else
+        for i = 1:length(regions)
+            points = regions{i};
+            visual = doc.createElement('visual');
+            % using a unique ID fixes a caching problem with the gazebo GUI
+            visual.setAttribute('name', java.util.UUID.randomUUID.toString());
+            polyline.appendChild(visual);
+            visualPose = doc.createElement('pose');
+            visual.appendChild(visualPose);
+            visualPose.setTextContent(['0 0 ',num2str(Z(i), num2strPrecision),' 0 0 0']);
+            visualGeometry = doc.createElement('geometry');
+            visual.appendChild(visualGeometry);
+            geometryPolyline = doc.createElement('polyline');
+            visualGeometry.appendChild(geometryPolyline);
+            for j = 1:size(points,1)
+                polylinePoint = doc.createElement('point');
+                geometryPolyline.appendChild(polylinePoint);
+                polylinePoint.setTextContent([num2str(points(j,1), num2strPrecision),' ',num2str(points(j,2), num2strPrecision)]);
+            end
+            polylineHeight = doc.createElement('height');
+            geometryPolyline.appendChild(polylineHeight);
+            polylineHeight.setTextContent(num2str(height, num2strPrecision));
+            visualMaterial = doc.createElement('material');
+            visual.appendChild(visualMaterial);
+            scriptMaterial = doc.createElement('script');
+            visualMaterial.appendChild(scriptMaterial);
+            uriMaterial = doc.createElement('uri');
+            scriptMaterial.appendChild(uriMaterial);
+            uriMaterial.setTextContent('file://media/materials/scripts/gazebo.material');
+            nameMaterial = doc.createElement('name');
+            scriptMaterial.appendChild(nameMaterial);
+            nameMaterial.setTextContent(materials{i});
+        end
+        for i=1:length(regions)
+            points = regions{i};
+            collision = doc.createElement('collision');
+            collision.setAttribute('name', java.util.UUID.randomUUID.toString());
+            polyline.appendChild(collision);
+            collisionPose = doc.createElement('pose');
+            collision.appendChild(collisionPose);
+            collisionPose.setTextContent(['0 0 ',num2str(Z(i), num2strPrecision),' 0 0 0']);
+            collisionGeometry = doc.createElement('geometry');
+            collision.appendChild(collisionGeometry);
+            geometryPolyline = doc.createElement('polyline');
+            collisionGeometry.appendChild(geometryPolyline);
+            for j = 1:size(points,1)
+                polylinePoint = doc.createElement('point');
+                geometryPolyline.appendChild(polylinePoint);
+                polylinePoint.setTextContent([num2str(points(j,1), num2strPrecision),' ',num2str(points(j,2), num2strPrecision)]);
+            end
+            polylineHeight = doc.createElement('height');
+            geometryPolyline.appendChild(polylineHeight);
+            polylineHeight.setTextContent(num2str(height, num2strPrecision));
+
+            surface = doc.createElement('surface');
+            collision.appendChild(surface);
+            contact = doc.createElement('contact');
+            surface.appendChild(contact);
+            collideBitmask = doc.createElement('collide_bitmask');
+            contact.appendChild(collideBitmask);
+            collideBitmask.setTextContent('0xffff');
+            friction = doc.createElement('friction');
+            surface.appendChild(friction);
+            odeNode = doc.createElement('ode');
+            friction.appendChild(odeNode);
+            mu = doc.createElement('mu');
+            odeNode.appendChild(mu);
+            mu.setTextContent('100');
+            mu2 = doc.createElement('mu2');
+            odeNode.appendChild(mu2);
+            mu2.setTextContent('50');
+        end
     end
     inertial = doc.createElement('inertial');
     polyline.appendChild(inertial);
@@ -203,8 +268,7 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
         angularDragElem = doc.createElement('angular_drag');
         plugin.appendChild(angularDragElem);
         angularDragElem.setTextContent(num2str(angularDrag, num2strPrecision));
-        for i=1:length(regions)
-            points = regions{i};
+        if useSTLOverride
             buoyancy = doc.createElement('buoyancy');
             plugin.appendChild(buoyancy);
             buoyancy.setAttribute('name',java.util.UUID.randomUUID.toString());
@@ -213,24 +277,44 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
             linkName.setTextContent(name);
             massElem = doc.createElement('mass');
             buoyancy.appendChild(massElem);
-            massElem.setTextContent(num2str(regionMass(i), num2strPrecision));
-
+            massElem.setTextContent(num2str(mass, num2strPrecision));
             buoyancyGeometry = doc.createElement('geometry');
             buoyancy.appendChild(buoyancyGeometry);
-            geometryPolyline = doc.createElement('polyline');
-            buoyancyGeometry.appendChild(geometryPolyline);
+            buoyancyMesh = doc.createElement('mesh');
+            buoyancyGeometry.appendChild(buoyancyMesh);
+            buoyancyUriElem = doc.createElement('uri');
+            buoyancyMesh.appendChild(buoyancyUriElem);
+            buoyancyUriElem.setTextContent(['file://',meshBoatSTLPath]);
+        else
+            for i=1:length(regions)
+                points = regions{i};
+                buoyancy = doc.createElement('buoyancy');
+                plugin.appendChild(buoyancy);
+                buoyancy.setAttribute('name',java.util.UUID.randomUUID.toString());
+                linkName = doc.createElement('link_name');
+                buoyancy.appendChild(linkName);
+                linkName.setTextContent(name);
+                massElem = doc.createElement('mass');
+                buoyancy.appendChild(massElem);
+                massElem.setTextContent(num2str(regionMass(i), num2strPrecision));
 
-            for j = 1:size(points,1)
-                polylinePoint = doc.createElement('point');
-                geometryPolyline.appendChild(polylinePoint);
-                polylinePoint.setTextContent([num2str(points(j,1), num2strPrecision),' ',num2str(points(j,2), num2strPrecision)]);
+                buoyancyGeometry = doc.createElement('geometry');
+                buoyancy.appendChild(buoyancyGeometry);
+                geometryPolyline = doc.createElement('polyline');
+                buoyancyGeometry.appendChild(geometryPolyline);
+
+                for j = 1:size(points,1)
+                    polylinePoint = doc.createElement('point');
+                    geometryPolyline.appendChild(polylinePoint);
+                    polylinePoint.setTextContent([num2str(points(j,1), num2strPrecision),' ',num2str(points(j,2), num2strPrecision)]);
+                end
+                polylineHeight = doc.createElement('height');
+                polylineHeight.setTextContent(num2str(height, num2strPrecision));
+                geometryPolyline.appendChild(polylineHeight);
+                polylineZShift = doc.createElement('zshift');
+                polylineZShift.setTextContent(num2str(Z(i), num2strPrecision));
+                geometryPolyline.appendChild(polylineZShift);
             end
-            polylineHeight = doc.createElement('height');
-            polylineHeight.setTextContent(num2str(height, num2strPrecision));
-            geometryPolyline.appendChild(polylineHeight);
-            polylineZShift = doc.createElement('zshift');
-            polylineZShift.setTextContent(num2str(Z(i), num2strPrecision));
-            geometryPolyline.appendChild(polylineZShift);
         end
     end
     

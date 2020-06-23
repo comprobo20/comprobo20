@@ -1,6 +1,3 @@
-% TODO: is it possible there are some degenerate meshes still being used?
-% [Wrn] [MeshManager.cc:1343] Ignoring edge without 2 distinct vertices
-
 function customBoat3d()
     function closeRequest(src,callbackdata)
         % Close request function 
@@ -182,6 +179,7 @@ function customBoat3d()
         if nargin < 1
             shouldPause = false;
         end
+        meshBoatSTLPath = '';
         poly = polyshape(allPoints);
         if poly.NumRegions ~= 1 | poly.NumHoles ~= 0
             disp("Can't spawn model as it has holes or intersections");
@@ -189,9 +187,8 @@ function customBoat3d()
             return
         end
         if createMeshBoat
-            makeLoftedMesh(allPoints(:,1), allPoints(:,2), maxY, Z, loftCurve);
-            % TODO: need general mesh cleaning (see comments in
-            % makeLoftedMesh)
+            stlFileName = makeLoftedMesh(allPoints(:,1), allPoints(:,2), maxY, Z, loftCurve, false);
+            meshBoatSTLPath = fullfile(pwd,stlFileName);
         end
         % spawn the model
         doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
@@ -234,7 +231,7 @@ function customBoat3d()
                 allZs(end+1) = Z(slice);
             end
         end
-        polyline(doc, modelElem, 'customBoat', allComponentDensityRatios, Z(2)-Z(1), allRegions, allMaterials, true, allZs);
+        polyline(doc, modelElem, 'customBoat', allComponentDensityRatios, Z(2)-Z(1), allRegions, allMaterials, true, allZs, meshBoatSTLPath);
         if shouldPause
             msg = rosmessage(pauseSvc);
             call(pauseSvc, msg);
@@ -284,18 +281,24 @@ function customBoat3d()
     Z = Z - (Z(2)-Z(1))/2;  % maintain a Z center of mass of 0
 
     loftCurve = abs(2.*(Z + (Z(2)-Z(1))/2)./boatLength).^longitudinalShapeParameter;
+    
     getPhysicsClient = rossvcclient('/gazebo/get_physics_properties');
     m = rosmessage(getPhysicsClient);
     physicsProperties = call(getPhysicsClient, m);
 
     setPhysicsClient = rossvcclient('/gazebo/set_physics_properties');
     m = rosmessage(setPhysicsClient);
-    m.TimeStep = 0.01;
-    m.MaxUpdateRate = 100;
+    if createMeshBoat
+        m.TimeStep = 0.005;
+        m.MaxUpdateRate = 200;
+    else
+        m.TimeStep = 0.01;
+        m.MaxUpdateRate = 100;
+    end
     m.Gravity = physicsProperties.Gravity;
     m.OdeConfig = physicsProperties.OdeConfig;
     call(setPhysicsClient, m);
-    
+
 	f = figure('CloseRequestFcn',@closeRequest);
     subplot(7,1,4:6);
     % used to pause the simulation when a new boat is spawned
