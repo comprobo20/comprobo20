@@ -66,7 +66,7 @@ function customBoat3d()
         end
     end
 
-    function CoM = plotAVSCurve(allPoints)
+    function plotAVSCurve(allPoints)
         if size(allPoints,1) <= 3
             return
         end
@@ -188,6 +188,11 @@ function customBoat3d()
             disp("Use the 'r' key to reset");
             return
         end
+        if createMeshBoat
+            makeLoftedMesh(allPoints(:,1), allPoints(:,2), maxY, Z, loftCurve);
+            % TODO: need general mesh cleaning (see comments in
+            % makeLoftedMesh)
+        end
         % spawn the model
         doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
         sdfElem = doc.getDocumentElement();
@@ -270,6 +275,9 @@ function customBoat3d()
     ballastDensityRatio = 1.24;
     % the boat length (this is the extrusion dimension)
     boatLength = 6;
+    % eventually we can use the meshboat in the simulator as it will be
+    % much more computationally efficient.  For now, just leave as is.
+    createMeshBoat = true;
     
     longitudinalShapeParameter = 4;
     Z = linspace(-boatLength/2, boatLength/2, 200);
