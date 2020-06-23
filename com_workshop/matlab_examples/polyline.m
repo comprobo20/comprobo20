@@ -11,9 +11,11 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
     if nargin < 9
         meshBoatSTLPath = '';
     else
-        % hack to work with parallels on my machine
-        startHomeRelativePath = strfind(meshBoatSTLPath,'pruvolo')+length('pruvolo');
-        meshBoatSTLPath = ['/media/psf/Home',meshBoatSTLPath(startHomeRelativePath:end)];
+        if ismac
+            % hack to work with parallels on my machine
+            startHomeRelativePath = strfind(meshBoatSTLPath,'pruvolo')+length('pruvolo');
+            meshBoatSTLPath = ['/media/psf/Home',meshBoatSTLPath(startHomeRelativePath:end)];
+        end
     end
     useSTLOverride = ~isempty(meshBoatSTLPath);
     % precision of output (extra digits help when polygon points are close
