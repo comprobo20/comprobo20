@@ -1,7 +1,4 @@
 function makeLoftedMesh(x, y, deckHeight, Zs, loftCurve)
-% TODO: remove duplicate and dangling vertices and 0 area faces from final mesh
-% delete last point as we handle it differently in this function than we
-% did before where it was convenient to have
 points = [x(1:end-1) y(1:end-1)];
 npoints = size(points,1);
 
@@ -25,13 +22,13 @@ for i=1:length(Zs)
     end
 end
 
-% add the end ccap
+% add the end caps
 for i = [1 length(Zs)]
     slicePoints = points;
     slicePoints(:,end) = slicePoints(:,end)+loftCurve(i);
     slicePoints(:,end+1) = Zs(i);
     T = triangulation(polyshape(slicePoints(:,1),slicePoints(:,2)));
-    % TODO: match vertices
+
     vertOffset = size(verts,1);
     verts = [verts; T.Points Zs(i)*ones(size(T.Points,1),1)];
     % make sure normal vectors point in the correct direction
@@ -54,14 +51,13 @@ planes.n = [0 1 0];
 planes.r = [0 deckHeight 0];
 polygons = mesh_xsections( verts, faces, planes, [], 2 );
 figure;
-% TODO might be iterating this the wrong way (e.g., it could be
-% size(polygons{1},2)
+
 for i=1:size(polygons{1},1)
     p = polyshape(polygons{1}{i}(:,[1 3]));
     plot(p);
     hold on;
     T = triangulation(p);
-    % TODO: match vertices
+
     vertOffset = size(verts,1);
     verts = [verts; T.Points(:,1) deckHeight*ones(size(T.Points,1),1) T.Points(:,2)];
     % make sure normal vectors point in the correct direction
@@ -131,13 +127,39 @@ for i=1:size(faces,1)
         end
     end
 end
-% TODO: remove zero area faces dangling and duplicate vertices
+
 faces = newFaces;
+
+% remove 0 area faces
+areas = zeros(size(faces,1),1);
+for i=1:size(faces,1)
+    V = verts(faces(i,:),:);
+    vec1 = V(2,:) - V(1,:);
+    vec2 = V(3,:) - V(1,:);
+    cp = cross(vec1, vec2);
+    areas(i) = norm(cp)/2;
+end
+faces = faces(areas>0,:);
+
+% get rid of dangling vertices
+u = unique(faces(:));
+mappings = zeros(size(verts,1),1);
+mappings(u) = [1:length(u)];
+faces = mappings(faces);
+verts = verts(u,:);
+
+% get rid of non-unique vertices
+[verts,~,mappings] = unique(verts,'rows');
+faces = mappings(faces);
+
 figure;
 view(3);
 axis equal;
 p = patch('Faces',faces,'Vertices',verts);
 p.EdgeColor = [1 0 0];
+disp(['Num vertices ', num2str(size(verts,1))]);
+disp(['Num faces ', num2str(size(faces,1))]);
+
 TR = triangulation(faces, verts);
 stlwrite(TR, 'loftedmesh.stl');
 end
