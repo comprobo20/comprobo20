@@ -279,6 +279,8 @@ function customBoat3d()
     longitudinalShapeParameter = 4;
     Z = linspace(-boatLength/2, boatLength/2, 200);
     Z = Z - (Z(2)-Z(1))/2;  % maintain a Z center of mass of 0
+    % TODO: the Z spacings might need to be adjusted for the mesh boat (we
+    % get a non-zero offset in the center of mass in the Z-direction
 
     loftCurve = abs(2.*(Z + (Z(2)-Z(1))/2)./boatLength).^longitudinalShapeParameter;
     
