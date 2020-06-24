@@ -189,7 +189,7 @@ function customBoat3d()
         if createMeshBoat
             shiftedZs = Z + (Z(2)-Z(1))/2;
             stlFileName = makeLoftedMesh(allPoints(:,1), allPoints(:,2), maxY, shiftedZs, loftCurve, false);
-            meshBoatSTLPath = fullfile(pwd,stlFileName);
+            meshBoatSTLPath = fullfile(pwd,stlFileName)
         end
         % spawn the model
         doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
@@ -254,7 +254,18 @@ function customBoat3d()
                 updateAllPoints();
                 set(p,'XData',allPoints(:,1),'YData',allPoints(:,2));
                 set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
-         end
+            case 'x'
+                if ~spawned
+                   spawnBoat();
+                end
+                if ~any(allPoints(:,2)<ballastLevel)
+                    newName = ['exportedBoat_noballast.stl'];
+                else
+                    newName = ['exportedBoat_ballastLevelBelowDeck_',num2str(maxY-ballastLevel),'.stl'];
+                end
+                copyfile(stlFileName, newName);
+                disp(['Exported ',newName]);
+        end
     end
 
     % track whether the boat has been spawned in Gazebo
@@ -309,6 +320,7 @@ function customBoat3d()
     startPoint = [0 0];
     endPoint = [0 1];
     userPoints = [];
+    stlFileName = '';
     allPoints = [startPoint; endPoint];
     allSlices = {};
     % plot the vertices
