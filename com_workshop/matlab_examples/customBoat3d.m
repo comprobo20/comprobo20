@@ -76,6 +76,7 @@ function customBoat3d()
             return
         end
         totalWeightedVolume = 0;
+        totalVolume = 0;
         deltaz = Z(2)-Z(1);
         % right now we are just worried about the 2D CoM (could add 3D)
         CoM = [0 0];
@@ -107,17 +108,19 @@ function customBoat3d()
             for k=1:length(regions)
                 [~,xcomRegion,ycomRegion] = cumulativeArea(getCCWVertices(regions(k)),Inf); % Inf means use the whole polygon
                 CoM = CoM + [xcomRegion ycomRegion]*regions(k).area*ballastDensityRatio*deltaz;
+                totalVolume = totalVolume + regions(k).area*deltaz;
                 totalWeightedVolume = totalWeightedVolume + regions(k).area*ballastDensityRatio*deltaz;
             end
             regions = polyshape(hullVerts).regions;
             for k=1:length(regions)
                 [~,xcomRegion,ycomRegion] = cumulativeArea(getCCWVertices(regions(k)),Inf); % Inf means use the whole polygon
                 CoM = CoM + [xcomRegion ycomRegion]*regions(k).area*densityRatio*deltaz;
+                totalVolume = totalVolume + regions(k).area*deltaz;
                 totalWeightedVolume = totalWeightedVolume + regions(k).area*densityRatio*deltaz;
             end
         end
         CoM = CoM / totalWeightedVolume;
-
+        averageInfill = totalWeightedVolume/totalVolume/ballastDensityRatio;
         for i = 1:length(thetas)
             [torques(i),waterlines(i)] = getWaterLineHelper(thetas(i),CoM,totalWeightedVolume,allSlices,deltaz);
         end
@@ -255,15 +258,43 @@ function customBoat3d()
                 set(p,'XData',allPoints(:,1),'YData',allPoints(:,2));
                 set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
             case 'x'
-                if ~spawned
-                   spawnBoat();
-                end
+                scaleFactor = exportedBoatLength / boatLength * 1000; % most 3d printing services assume a unit of mm (hence the factor of 1000)
+                % create the scaled STL
+                shiftedZs = Z + (Z(2)-Z(1))/2;
+                scaledSTLFile = makeLoftedMesh(allPoints(:,1)*scaleFactor, allPoints(:,2)*scaleFactor, maxY*scaleFactor, shiftedZs*scaleFactor, loftCurve*scaleFactor, false);
+                scaledSTLPath = fullfile(pwd,scaledSTLFile)
                 if ~any(allPoints(:,2)<ballastLevel)
-                    newName = ['exportedBoat_noballast.stl'];
+                    newName = ['exportedBoat_noballast_avginfill_',num2str(averageInfill),'.stl'];
                 else
-                    newName = ['exportedBoat_ballastLevelBelowDeck_',num2str(maxY-ballastLevel),'.stl'];
+                    newName = ['exportedBoat_ballastLevelBelowDeck_',num2str((maxY-ballastLevel)*scaleFactor),'mm_avginfill_',num2str(averageInfill),'.stl'];
+                    f2 = figure;
+                    % plot the vertices
+                    scatter(scaleFactor*allPoints(:,1), scaleFactor*allPoints(:,2),'MarkerFaceColor', uint8([128 128 128]), 'MarkerEdgeColor', uint8([64 64 64]));
+                    hold on;
+                    % plot the edges
+                    plot(scaleFactor*allPoints(:,1), scaleFactor*allPoints(:,2),'k');
+                    % draw a line for the ballast level
+                    plot(scaleFactor*[minX maxX],scaleFactor*[ballastLevel ballastLevel],'k');
+                    xlabel('mm');
+                    ylabel('mm');
+                    pos = get(gca, 'Position');
+                    ylims = ylim;
+                    proportionToBallast = (scaleFactor*ballastLevel-ylims(1))/range(ylims);
+                    proportionToBallastBottom = (scaleFactor*min(allPoints(:,2))-ylims(1))/range(ylims);
+                    proportionToDeck = (scaleFactor*maxY-ylims(1))/range(ylims);
+                    annotation('doublearrow','X',[0.75, 0.75],'Y',[pos(4)*proportionToBallastBottom+pos(2) pos(4)*proportionToBallast+pos(2)]);
+                    annotation('textbox',[0.75, pos(2)+(pos(4)*proportionToBallast)/2-0.05 0.1 0.1],'String',['100% infill',char(10),num2str(scaleFactor*(ballastLevel-min(allPoints(:,2)))),'mm'],'FitBoxToText','on');
+                    disp('Warning this does not respect density ratio other than default');
+                    annotation('doublearrow','X',[0.75, 0.75],'Y',[pos(4)*proportionToBallast+pos(2) pos(4)*proportionToDeck+pos(2)]);
+                    annotation('textbox',[0.75, (pos(4)*proportionToBallast+pos(2)+pos(4))/2 0.1 0.1],'String',['20% infill',char(10),num2str((maxY-ballastLevel)*scaleFactor),'mm'],'FitBoxToText','on');
+                    annotation('textbox',[pos(1)+0.05, pos(4)*proportionToBallast 0.1 0.1],'String',[num2str(ballastLevel*scaleFactor),'mm'],'FitBoxToText','on');
+                    printingInstructionsPDF = [newName(1:end-length('stl')),'pdf'];
+                    title('xy cross section');
+                    saveas(f2,printingInstructionsPDF);
+                    disp(['Exported ',printingInstructionsPDF]);
+                    close(f2);
                 end
-                copyfile(stlFileName, newName);
+                copyfile(scaledSTLPath, newName);
                 disp(['Exported ',newName]);
         end
     end
@@ -282,8 +313,12 @@ function customBoat3d()
     ballastLevel = minY;
     % density ratio of ballast is 1.24 (solid PLA)
     ballastDensityRatio = 1.24;
+    % average infill (useful for ordering 3d prints)
+    averageInfill = 0;
     % the boat length (this is the extrusion dimension)
-    boatLength = 6;
+    boatLength = 4;
+    % exported boat length in meters (if creating a 3d print)
+    exportedBoatLength = 0.2032;% m (or 8 inches)
     % eventually we can use the meshboat in the simulator as it will be
     % much more computationally efficient.  For now, just leave as is.
     createMeshBoat = true;
