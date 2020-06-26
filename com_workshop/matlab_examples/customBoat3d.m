@@ -282,22 +282,26 @@ function customBoat3d()
                     plot(scaleFactor*allPointsRotated(:,1), scaleFactor*allPointsRotated(:,2),'k');
                     % draw a line for the ballast level
                     flippedBallastLevel = maxY - ballastLevel;
-
-                    plot(scaleFactor*[minX maxX],scaleFactor*[flippedBallastLevel flippedBallastLevel],'k');
+                    axis equal;
+                    plot(xlim(),scaleFactor*[flippedBallastLevel flippedBallastLevel],'k');
                     xlabel('mm');
                     ylabel('mm');
                     pos = get(gca, 'Position');
                     ylims = ylim;
+                    xlims = xlim;
+                    axis manual;
                     proportionToBallast = (scaleFactor*flippedBallastLevel-ylims(1))/range(ylims);
                     proportionToBallastBottom = (scaleFactor*min(allPoints(:,2))-ylims(1))/range(ylims);
                     proportionToDeck = (scaleFactor*maxY-ylims(1))/range(ylims);
                     annotation('doublearrow','X',[0.75, 0.75],'Y',[pos(4)*proportionToBallastBottom+pos(2) pos(4)*proportionToBallast+pos(2)]);
-                    annotation('textbox',[0.75, pos(2)+(pos(4)*proportionToBallast)/2-0.05 0.1 0.1],'String',['20% infill',char(10),num2str(scaleFactor*(flippedBallastLevel-min(allPoints(:,2)))),'mm'],'FitBoxToText','on');
+                    annotation('textbox',[0.75, pos(4)*proportionToBallastBottom+pos(2)-0.05 0.1 0.1],'String',['20% infill',char(10),num2str(scaleFactor*(flippedBallastLevel-min(allPoints(:,2)))),'mm'],'FitBoxToText','on');
                     disp('Warning this does not respect density ratio other than default');
                     annotation('doublearrow','X',[0.75, 0.75],'Y',[pos(4)*proportionToBallast+pos(2) pos(4)*proportionToDeck+pos(2)]);
-                    annotation('textbox',[0.75, (pos(4)*proportionToBallast+pos(2)+pos(4))/2 0.1 0.1],'String',['100% infill',char(10),num2str((maxY-flippedBallastLevel)*scaleFactor),'mm'],'FitBoxToText','on');
+                    annotation('textbox',[0.75, (pos(4)*proportionToBallast+pos(2)+pos(4))/2 0.1 0.1],'String','100% infill','FitBoxToText','on');
                     printingInstructionsPDF = [newName(1:end-length('stl')),'pdf'];
-                    title('xy cross section');
+                    area([xlims(1) xlims(2) xlims(2) xlims(1) xlims(1)],[ylims(1) ylims(1) 0 0 ylims(1)],'facecolor',[0.9, 0.9, 0.9]);
+                    text(-0.1,ylims(1)/2,'Print Plate');
+                    title('x-y cross section (z = 0)');
                     saveas(f2,printingInstructionsPDF);
                     disp(['Exported ',printingInstructionsPDF]);
                     close(f2);
