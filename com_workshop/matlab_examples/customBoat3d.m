@@ -1,3 +1,8 @@
+% Relevant links to send to 3D print service
+%   Switch infill at z value
+%   (https://community.ultimaker.com/topic/9167-is-there-a-way-to-change-infill-percentage-at-a-certain-height/)
+%   Different infill in the same part
+%   (https://3dprinting.stackexchange.com/questions/6522/different-infill-in-the-same-part)
 function customBoat3d()
     function closeRequest(src,callbackdata)
         % Close request function 
