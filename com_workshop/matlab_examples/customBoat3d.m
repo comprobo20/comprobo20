@@ -261,33 +261,41 @@ function customBoat3d()
                 scaleFactor = exportedBoatLength / boatLength * 1000; % most 3d printing services assume a unit of mm (hence the factor of 1000)
                 % create the scaled STL
                 shiftedZs = Z + (Z(2)-Z(1))/2;
-                scaledSTLFile = makeLoftedMesh(allPoints(:,1)*scaleFactor, allPoints(:,2)*scaleFactor, maxY*scaleFactor, shiftedZs*scaleFactor, loftCurve*scaleFactor, false);
+                printingTransform = zeros(4);
+                printingTransform(4,4) = 1;
+                printingTransform(1:3,1:3) = eul2rotm([pi 0 0]);
+                printingTransform(2,4) = maxY*scaleFactor;
+                scaledSTLFile = makeLoftedMesh(allPoints(:,1)*scaleFactor, allPoints(:,2)*scaleFactor, maxY*scaleFactor, shiftedZs*scaleFactor, loftCurve*scaleFactor, false, printingTransform);
                 scaledSTLPath = fullfile(pwd,scaledSTLFile)
                 if ~any(allPoints(:,2)<ballastLevel)
                     newName = ['exportedBoat_noballast_avginfill_',num2str(averageInfill),'.stl'];
                 else
-                    newName = ['exportedBoat_ballastLevelBelowDeck_',num2str((maxY-ballastLevel)*scaleFactor),'mm_avginfill_',num2str(averageInfill),'.stl'];
+                    newName = ['exportedBoat_avginfill_',num2str(averageInfill),'.stl'];
                     f2 = figure;
                     % plot the vertices
-                    scatter(scaleFactor*allPoints(:,1), scaleFactor*allPoints(:,2),'MarkerFaceColor', uint8([128 128 128]), 'MarkerEdgeColor', uint8([64 64 64]));
+                    R = [cosd(180) -sind(180); sind(180) cosd(180)];
+                    allPointsRotated = allPoints*[cosd(180) -sind(180); sind(180) cosd(180)]';
+                    allPointsRotated(:,2) = allPointsRotated(:,2)+maxY;
+                    scatter(scaleFactor*allPointsRotated(:,1), scaleFactor*allPointsRotated(:,2),'MarkerFaceColor', uint8([128 128 128]), 'MarkerEdgeColor', uint8([64 64 64]));
                     hold on;
                     % plot the edges
-                    plot(scaleFactor*allPoints(:,1), scaleFactor*allPoints(:,2),'k');
+                    plot(scaleFactor*allPointsRotated(:,1), scaleFactor*allPointsRotated(:,2),'k');
                     % draw a line for the ballast level
-                    plot(scaleFactor*[minX maxX],scaleFactor*[ballastLevel ballastLevel],'k');
+                    flippedBallastLevel = maxY - ballastLevel;
+
+                    plot(scaleFactor*[minX maxX],scaleFactor*[flippedBallastLevel flippedBallastLevel],'k');
                     xlabel('mm');
                     ylabel('mm');
                     pos = get(gca, 'Position');
                     ylims = ylim;
-                    proportionToBallast = (scaleFactor*ballastLevel-ylims(1))/range(ylims);
+                    proportionToBallast = (scaleFactor*flippedBallastLevel-ylims(1))/range(ylims);
                     proportionToBallastBottom = (scaleFactor*min(allPoints(:,2))-ylims(1))/range(ylims);
                     proportionToDeck = (scaleFactor*maxY-ylims(1))/range(ylims);
                     annotation('doublearrow','X',[0.75, 0.75],'Y',[pos(4)*proportionToBallastBottom+pos(2) pos(4)*proportionToBallast+pos(2)]);
-                    annotation('textbox',[0.75, pos(2)+(pos(4)*proportionToBallast)/2-0.05 0.1 0.1],'String',['100% infill',char(10),num2str(scaleFactor*(ballastLevel-min(allPoints(:,2)))),'mm'],'FitBoxToText','on');
+                    annotation('textbox',[0.75, pos(2)+(pos(4)*proportionToBallast)/2-0.05 0.1 0.1],'String',['20% infill',char(10),num2str(scaleFactor*(flippedBallastLevel-min(allPoints(:,2)))),'mm'],'FitBoxToText','on');
                     disp('Warning this does not respect density ratio other than default');
                     annotation('doublearrow','X',[0.75, 0.75],'Y',[pos(4)*proportionToBallast+pos(2) pos(4)*proportionToDeck+pos(2)]);
-                    annotation('textbox',[0.75, (pos(4)*proportionToBallast+pos(2)+pos(4))/2 0.1 0.1],'String',['20% infill',char(10),num2str((maxY-ballastLevel)*scaleFactor),'mm'],'FitBoxToText','on');
-                    annotation('textbox',[pos(1)+0.05, pos(4)*proportionToBallast 0.1 0.1],'String',[num2str(ballastLevel*scaleFactor),'mm'],'FitBoxToText','on');
+                    annotation('textbox',[0.75, (pos(4)*proportionToBallast+pos(2)+pos(4))/2 0.1 0.1],'String',['100% infill',char(10),num2str((maxY-flippedBallastLevel)*scaleFactor),'mm'],'FitBoxToText','on');
                     printingInstructionsPDF = [newName(1:end-length('stl')),'pdf'];
                     title('xy cross section');
                     saveas(f2,printingInstructionsPDF);

@@ -1,4 +1,4 @@
-function stl_file = makeLoftedMesh(x, y, deckHeight, Zs, loftCurve, visualize)
+function stl_file = makeLoftedMesh(x, y, deckHeight, Zs, loftCurve, visualize, finalVertexTransformation)
 if nargin < 6
     visualize = true;
 end
@@ -169,7 +169,11 @@ if visualize
 end
 disp(['Num vertices ', num2str(size(verts,1))]);
 disp(['Num faces ', num2str(size(faces,1))]);
-
+if nargin >= 7
+    vertsHomogeneous = [verts ones(size(verts,1),1)]';
+    vertsTransformed = finalVertexTransformation*vertsHomogeneous;
+    verts = vertsTransformed(1:3,:)';
+end
 TR = triangulation(faces, verts);
 stlwrite(TR, stl_file);
 end
