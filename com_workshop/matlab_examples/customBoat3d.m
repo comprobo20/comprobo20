@@ -286,11 +286,9 @@ function customBoat3d()
                     % rotate the points to be consistent with the orientation of the 3d print
                     allPointsRotated = allPoints*[cosd(180) -sind(180); sind(180) cosd(180)]';
                     allPointsRotated(:,2) = allPointsRotated(:,2)+maxY;
-                    % plot the vertices
-                    scatter(scaleFactor*allPointsRotated(:,1), scaleFactor*allPointsRotated(:,2),'MarkerFaceColor', uint8([128 128 128]), 'MarkerEdgeColor', uint8([64 64 64]));
-                    hold on;
                     % plot the edges
                     plot(scaleFactor*allPointsRotated(:,1), scaleFactor*allPointsRotated(:,2),'k');
+                    hold on;
                     % draw a line for the ballast level
                     flippedBallastLevel = maxY - ballastLevel;
                     plot(xlim(),scaleFactor*[flippedBallastLevel flippedBallastLevel],'k');
