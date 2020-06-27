@@ -55,15 +55,8 @@ end
 planes.n = [0 1 0];
 planes.r = [0 deckHeight 0];
 polygons = mesh_xsections( verts, faces, planes, []);
-if visualize
-    figure;
-end
 for i=1:size(polygons{1},1)
     p = polyshape(polygons{1}{i}(:,[1 3]));
-    if visualize
-        plot(p);
-        hold on;
-    end
     T = triangulation(p);
 
     vertOffset = size(verts,1);
@@ -160,20 +153,25 @@ verts = verts(u,:);
 [verts,~,mappings] = unique(verts,'rows');
 faces = mappings(faces);
 
+if nargin >= 7
+    vertsHomogeneous = [verts ones(size(verts,1),1)]';
+    vertsTransformed = finalVertexTransformation*vertsHomogeneous;
+    verts = vertsTransformed(1:3,:)';
+end
+
 if visualize
     figure;
     view(3);
     axis equal;
     p = patch('Faces',faces,'Vertices',verts);
     p.EdgeColor = [1 0 0];
+    xlabel('x (mm)');
+    ylabel('y (mm)');
+    zlabel('z (mm)');
 end
 disp(['Num vertices ', num2str(size(verts,1))]);
 disp(['Num faces ', num2str(size(faces,1))]);
-if nargin >= 7
-    vertsHomogeneous = [verts ones(size(verts,1),1)]';
-    vertsTransformed = finalVertexTransformation*vertsHomogeneous;
-    verts = vertsTransformed(1:3,:)';
-end
+
 TR = triangulation(faces, verts);
 stlwrite(TR, stl_file);
 end
