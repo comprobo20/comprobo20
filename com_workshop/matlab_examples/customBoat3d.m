@@ -292,7 +292,7 @@ function customBoat3d()
                     % draw a line for the ballast level
                     flippedBallastLevel = maxY - ballastLevel;
                     plot(xlim(),scaleFactor*[flippedBallastLevel flippedBallastLevel],'k');
-                    ylim([min(min(ylim),-range(ylim)*0.1),max(ylim)]);
+                    ylim([min(min(ylim),-(max(ylim)-min(ylim))*0.1),max(ylim)]);
                     axis equal;
                     xlabel('x (mm)');
                     ylabel('z (mm)');
@@ -301,21 +301,22 @@ function customBoat3d()
 
                     deckToBallastArrow = annotation('doublearrow');
                     deckToBallastArrow.Parent = gca;
-                    deckToBallastArrow.Position = [range(xlims)*0.75+xlims(1), 0, 0, scaleFactor*flippedBallastLevel];
+                    xrange = max(xlims)-min(xlims);
+                    deckToBallastArrow.Position = [xrange*0.75+xlims(1), 0, 0, scaleFactor*flippedBallastLevel];
 
-                    text(range(xlims)*0.77+xlims(1), scaleFactor*flippedBallastLevel*0.5, ['20% infill',char(10),num2str((maxY-ballastLevel)*scaleFactor),'mm']);
+                    text(xrange*0.77+xlims(1), scaleFactor*flippedBallastLevel*0.5, ['20% infill',char(10),num2str((maxY-ballastLevel)*scaleFactor),'mm']);
 
                     disp('Warning this does not respect density ratio other than default');
 
                     ballastToBottomArrow = annotation('doublearrow');
                     ballastToBottomArrow.Parent = gca;
-                    ballastToBottomArrow.Position = [range(xlims)*0.75+xlims(1), scaleFactor*flippedBallastLevel, 0, scaleFactor*(max(allPointsRotated(:,2))-flippedBallastLevel)];
+                    ballastToBottomArrow.Position = [xrange*0.75+xlims(1), scaleFactor*flippedBallastLevel, 0, scaleFactor*(max(allPointsRotated(:,2))-flippedBallastLevel)];
 
-                    text(range(xlims)*0.77+xlims(1), 0.5*scaleFactor*flippedBallastLevel+0.5*scaleFactor*max(allPointsRotated(:,2)), '100% infill');
+                    text(xrange*0.77+xlims(1), 0.5*scaleFactor*flippedBallastLevel+0.5*scaleFactor*max(allPointsRotated(:,2)), '100% infill');
                     printingInstructionsPDF = [newName(1:end-length('stl')),'pdf'];
                     printPlateVisual = area([xlims(1) xlims(2) xlims(2) xlims(1) xlims(1)],[ylims(1) ylims(1) 0 0 ylims(1)],'facecolor',[0.9, 0.9, 0.9],'LineStyle','none');
                     alpha(printPlateVisual,0.5);
-                    text(-0.05*range(xlims), ylims(1)/2, 'Print Plate');
+                    text(-0.05*xrange, ylims(1)/2, 'Print Plate');
                     title('x-z cross section (y = 0)');
                     saveas(f2,printingInstructionsPDF);
                     disp(['Exported ',printingInstructionsPDF]);
