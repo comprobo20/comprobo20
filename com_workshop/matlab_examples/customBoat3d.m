@@ -319,6 +319,9 @@ function customBoat3d()
                     title('x-z cross section (y = 0)');
                     saveas(f2,printingInstructionsPDF);
                     disp(['Exported ',printingInstructionsPDF]);
+                    avsPredictions = [newName(1:end-length('stl')-1),'_avs.pdf'];
+                    saveas(f,avsPredictions);
+                    disp(['Exported ',avsPredictions]);
                 end
                 copyfile(scaledSTLPath, newName);
                 disp(['Exported ',newName]);
