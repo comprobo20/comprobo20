@@ -330,9 +330,18 @@ function customBoat3d()
     % populate the hull with these two points
     startPoint = [0 0];
     endPoint = [0 1];
-    userPoints = [];
-    stlFileName = '';
     allPoints = [startPoint; endPoint];
+
+    userPoints = [];
+    % This was added to make a boat for John (TODO: remove)
+    populateWithPolyBoatTmp = false;
+    if populateWithPolyBoatTmp
+        polyboatX = linspace(1/20,1,20);
+        polyboatY = abs(2.*polyboatX/2).^2;
+        userPoints = [polyboatX' polyboatY'];
+    end
+    updateAllPoints();
+    stlFileName = '';
     allSlices = {};
     % plot the vertices
     s = scatter(allPoints(:,1), allPoints(:,2),'MarkerFaceColor', uint8([128 128 128]), 'MarkerEdgeColor', uint8([64 64 64]));
