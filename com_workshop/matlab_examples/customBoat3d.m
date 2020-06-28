@@ -266,66 +266,11 @@ function customBoat3d()
                 set(s,'XData',allPoints(:,1),'YData',allPoints(:,2));
             case 'x'
                 scaleFactor = exportedBoatLength / boatLength * 1000; % most 3d printing services assume a unit of mm (hence the factor of 1000)
-                % create the scaled STL
+                % shift the Zs, so they are positioned at the center of
+                % each slice (TODO: this might be chopping off a slice from
+                % each end of the boat)
                 shiftedZs = Z + (Z(2)-Z(1))/2;
-                printingTransform = zeros(4);
-                printingTransform(4,4) = 1;
-                printingTransform(1:3,1:3) = eul2rotm([pi 0 0]);
-                printingTransform(2,4) = maxY*scaleFactor;
-                secondTransform = zeros(4);
-                secondTransform(4,4) = 1;
-                secondTransform(1:3,1:3) = eul2rotm([0 0 pi/2]);
-                printingTransform = secondTransform*printingTransform;
-                scaledSTLFile = makeLoftedMesh(allPoints(:,1)*scaleFactor, allPoints(:,2)*scaleFactor, maxY*scaleFactor, shiftedZs*scaleFactor, loftCurve*scaleFactor, true, printingTransform);
-                scaledSTLPath = fullfile(pwd,scaledSTLFile)
-                if ~any(allPoints(:,2)<ballastLevel)
-                    newName = ['exportedBoat_noballast_avginfill_',num2str(averageInfill),'.stl'];
-                else
-                    newName = ['exportedBoat_avginfill_',num2str(averageInfill),'.stl'];
-                    f2 = figure;
-                    % rotate the points to be consistent with the orientation of the 3d print
-                    allPointsRotated = allPoints*[cosd(180) -sind(180); sind(180) cosd(180)]';
-                    allPointsRotated(:,2) = allPointsRotated(:,2)+maxY;
-                    % plot the edges
-                    plot(scaleFactor*allPointsRotated(:,1), scaleFactor*allPointsRotated(:,2),'k');
-                    hold on;
-                    % draw a line for the ballast level
-                    flippedBallastLevel = maxY - ballastLevel;
-                    plot(xlim(),scaleFactor*[flippedBallastLevel flippedBallastLevel],'k');
-                    ylim([min(min(ylim),-(max(ylim)-min(ylim))*0.1),max(ylim)]);
-                    axis equal;
-                    xlabel('x (mm)');
-                    ylabel('z (mm)');
-                    ylims = ylim;
-                    xlims = xlim;
-
-                    deckToBallastArrow = annotation('doublearrow');
-                    deckToBallastArrow.Parent = gca;
-                    xrange = max(xlims)-min(xlims);
-                    deckToBallastArrow.Position = [xrange*0.75+xlims(1), 0, 0, scaleFactor*flippedBallastLevel];
-
-                    text(xrange*0.77+xlims(1), scaleFactor*flippedBallastLevel*0.5, ['20% infill',char(10),num2str((maxY-ballastLevel)*scaleFactor),'mm']);
-
-                    disp('Warning this does not respect density ratio other than default');
-
-                    ballastToBottomArrow = annotation('doublearrow');
-                    ballastToBottomArrow.Parent = gca;
-                    ballastToBottomArrow.Position = [xrange*0.75+xlims(1), scaleFactor*flippedBallastLevel, 0, scaleFactor*(max(allPointsRotated(:,2))-flippedBallastLevel)];
-
-                    text(xrange*0.77+xlims(1), 0.5*scaleFactor*flippedBallastLevel+0.5*scaleFactor*max(allPointsRotated(:,2)), '100% infill');
-                    printingInstructionsPDF = [newName(1:end-length('stl')),'pdf'];
-                    printPlateVisual = area([xlims(1) xlims(2) xlims(2) xlims(1) xlims(1)],[ylims(1) ylims(1) 0 0 ylims(1)],'facecolor',[0.9, 0.9, 0.9],'LineStyle','none');
-                    alpha(printPlateVisual,0.5);
-                    text(-0.05*xrange, ylims(1)/2, 'Print Plate');
-                    title('x-z cross section (y = 0)');
-                    saveas(f2,printingInstructionsPDF);
-                    disp(['Exported ',printingInstructionsPDF]);
-                    avsPredictions = [newName(1:end-length('stl')-1),'_avs.pdf'];
-                    saveas(f,avsPredictions);
-                    disp(['Exported ',avsPredictions]);
-                end
-                copyfile(scaledSTLPath, newName);
-                disp(['Exported ',newName]);
+                exportBoatForPrinting(scaleFactor, allPoints, shiftedZs, loftCurve, maxY, ballastLevel, averageInfill, f);
         end
     end
 
@@ -347,7 +292,7 @@ function customBoat3d()
     % average infill (useful for ordering 3d prints)
     averageInfill = 0;
     % the boat length (this is the extrusion dimension)
-    boatLength = 4;
+    boatLength = 5;
     % exported boat length in meters (if creating a 3d print)
     exportedBoatLength = 0.2032;% m (or 8 inches)
     % eventually we can use the meshboat in the simulator as it will be
