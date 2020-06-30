@@ -1,6 +1,7 @@
 function exportBoatForPrinting(scaleFactor, crossSection, Z, loftCurve, deckHeight, ballastLevel, averageInfill, avsFigToSave)
-    % TODO: calculate avgInfill
+    % TODO: calculate avgInfill in this file (not passed in as an arg)
     % create the scaled STL
+    layerThickness = 0.2;         % most prints use 0.2mm as the layer thickness
     printingTransform = zeros(4);
     printingTransform(4,4) = 1;
     printingTransform(1:3,1:3) = eul2rotm([pi 0 0]);
@@ -36,8 +37,9 @@ function exportBoatForPrinting(scaleFactor, crossSection, Z, loftCurve, deckHeig
         deckToBallastArrow.Parent = gca;
         xrange = max(xlims)-min(xlims);
         deckToBallastArrow.Position = [xrange*0.75+xlims(1), 0, 0, scaleFactor*flippedBallastLevel];
-
-        text(xrange*0.77+xlims(1), scaleFactor*flippedBallastLevel*0.5, ['20% infill',char(10),num2str((deckHeight-ballastLevel)*scaleFactor),'mm']);
+        % modify diagram so that the transition of the infill happens on a
+        % multiple of 0.2mm
+        text(xrange*0.77+xlims(1), scaleFactor*flippedBallastLevel*0.5, ['20% infill',char(10),num2str(round(1/layerThickness*(deckHeight-ballastLevel)*scaleFactor)*layerThickness),'mm']);
 
         disp('Warning this does not respect density ratio other than default');
 
