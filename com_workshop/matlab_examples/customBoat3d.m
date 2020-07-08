@@ -3,6 +3,8 @@
 %   (https://community.ultimaker.com/topic/9167-is-there-a-way-to-change-infill-percentage-at-a-certain-height/)
 %   Different infill in the same part
 %   (https://3dprinting.stackexchange.com/questions/6522/different-infill-in-the-same-part)
+%   The mesh fails the watertight check, might need to validate it against
+%   this criterion: https://axom.readthedocs.io/en/develop/axom/quest/docs/sphinx/check_and_repair.html
 function customBoat3d()
     function closeRequest(src,callbackdata)
         % Close request function 
