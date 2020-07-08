@@ -5,6 +5,9 @@
 %   (https://3dprinting.stackexchange.com/questions/6522/different-infill-in-the-same-part)
 %   The mesh fails the watertight check, might need to validate it against
 %   this criterion: https://axom.readthedocs.io/en/develop/axom/quest/docs/sphinx/check_and_repair.html
+%   The most likely culprit is the interface between the deck of the boat
+%   and the hull (the triangles used on the sides to form the interface to
+%   the deck are not the same as those used on top).
 function customBoat3d()
     function closeRequest(src,callbackdata)
         % Close request function 
