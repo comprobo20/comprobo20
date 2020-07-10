@@ -78,7 +78,10 @@ function customBoat3d()
         end
     end
 
-    function plotAVSCurve(allPoints)
+    function plotAVSCurve(allPoints, visualize)
+        if nargin < 2
+            visualize = false;
+        end
         if size(allPoints,1) <= 3
             return
         end
@@ -96,13 +99,13 @@ function customBoat3d()
         % right now we are just worried about the 2D CoM (could add 3D)
         CoM = [0 0];
         allSlices = {};
-
+        if visualize
+            if isempty(crossSectionFigure)
+                crossSectionFigure = figure();
+            end
+        end
         for slice=1:length(Z)
             loftedPoints = [allPoints(:,1) allPoints(:,2) + loftCurve(slice)];
-            % redo so the polygon starts at the lowest point
-            loftedPoints = loftedPoints(1:end-1,:);
-            [minlevel, minind] = min(loftedPoints(:,2));
-            loftedPoints = [loftedPoints(minind:end,:); loftedPoints(1:minind,:)];
             partitioned = chopPolygon(loftedPoints, maxY);
             fullCrossSectionPoly = polyshape(partitioned{1});
             boatInterior = polybuffer(fullCrossSectionPoly,-perimeterThickness,'JointType','miter');
@@ -111,17 +114,31 @@ function customBoat3d()
                 [perimeterCoMX, perimeterCoMY] = perimeterPolygon.centroid;
                 CoM = CoM + [perimeterCoMX perimeterCoMY]*perimeterPolygon.area*ballastDensityRatio*deltaz;
             end
+            if visualize
+                set(0,'CurrentFigure',crossSectionFigure);
+                clf;
+                plot(perimeterPolygon);
+                xlim([minX maxX]);
+                ylim([minY maxY+yBuffer]);
+                hold on;
+            end
             totalWeightedVolume = totalWeightedVolume + perimeterPolygon.area*ballastDensityRatio*deltaz;
             totalVolume = totalVolume + perimeterPolygon.area*deltaz;
 
             interiorRegions = boatInterior.regions;
-            hullPolys = polyshape();
-            ballastPolys = polyshape();
-            if minlevel < ballastLevel
+            hullPolys = polyshape.empty;
+            ballastPolys = polyshape.empty;
+            if min(boatInterior.Vertices(:,2)) < ballastLevel  % some ballast is present in the slice
                 for k=1:length(interiorRegions)
                     partitioned = chopPolygon(getCCWVertices(interiorRegions(k)), ballastLevel);
-                    ballastPolys(end+1) = polyshape(partitioned{1});
-                    hullPolys(end+1) = polyshape(partitioned{2});
+                    ballast = polyshape(partitioned{1});
+                    if ballast.area > 0
+                        ballastPolys(end+1) = ballast;
+                    end
+                    hull = polyshape(partitioned{2});
+                    if hull.area > 0
+                        hullPolys(end+1) = hull;
+                    end
                 end
             else
                 if boatInterior.area > 0
@@ -135,21 +152,40 @@ function customBoat3d()
             for k=1:length(regions)
                 allSlices{end+1} = getCCWVertices(regions(k));
             end
-            ballastPoly = union(ballastPolys);
+            if ~isempty(ballastPolys)
+                ballastPoly = union(ballastPolys);
+            else
+                ballastPoly = polyshape();
+            end
             regions = ballastPoly.regions;
             for k=1:length(regions)
                 [~,xcomRegion,ycomRegion] = cumulativeArea(getCCWVertices(regions(k)),Inf); % Inf means use the whole polygon
                 CoM = CoM + [xcomRegion ycomRegion]*regions(k).area*ballastDensityRatio*deltaz;
                 totalVolume = totalVolume + regions(k).area*deltaz;
                 totalWeightedVolume = totalWeightedVolume + regions(k).area*ballastDensityRatio*deltaz;
+                if visualize
+                    set(0,'CurrentFigure',crossSectionFigure);
+                    plot(regions(k),'FaceColor','r');
+                end
             end
-            hullPoly = union(hullPolys);
+            if ~isempty(hullPolys)
+                hullPoly = union(hullPolys);
+            else
+                hullPoly = polyshape();
+            end
             regions = hullPoly.regions;
             for k=1:length(regions)
                 [~,xcomRegion,ycomRegion] = cumulativeArea(getCCWVertices(regions(k)),Inf); % Inf means use the whole polygon
                 CoM = CoM + [xcomRegion ycomRegion]*regions(k).area*densityRatio*deltaz;
                 totalVolume = totalVolume + regions(k).area*deltaz;
                 totalWeightedVolume = totalWeightedVolume + regions(k).area*densityRatio*deltaz;
+                if visualize
+                    set(0,'CurrentFigure',crossSectionFigure);
+                    plot(regions(k),'FaceColor','m');
+                end
+            end
+            if visualize
+                pause(0.001);
             end
         end
         CoM = CoM / totalWeightedVolume;
@@ -242,10 +278,6 @@ function customBoat3d()
         allZs = [];
         for slice=1:length(Z)
             loftedPoints = [allPoints(:,1) allPoints(:,2) + loftCurve(slice)];
-            % redo so the polygon starts at the lowest point
-            loftedPoints = loftedPoints(1:end-1,:);
-            [minlevel, minind] = min(loftedPoints(:,2));
-            loftedPoints = [loftedPoints(minind:end,:); loftedPoints(1:minind,:)];
             partitioned = chopPolygon(loftedPoints, maxY);
             fullCrossSectionPoly = polyshape(partitioned{1});
             boatInterior = polybuffer(fullCrossSectionPoly,-perimeterThickness,'JointType','miter');
@@ -271,20 +303,30 @@ function customBoat3d()
             allZs(end+1) = Z(slice);
                 
             interiorRegions = boatInterior.regions;
-            hullPolys = polyshape();
-            ballastPolys = polyshape();
-            if minlevel < ballastLevel
+            hullPolys = polyshape.empty;
+            ballastPolys = polyshape.empty;
+            if min(boatInterior.Vertices(:,2)) < ballastLevel   % we have some ballast in this slice
                 for k=1:length(interiorRegions)
                     partitioned = chopPolygon(getCCWVertices(interiorRegions(k)), ballastLevel);
-                    ballastPolys(end+1) = polyshape(partitioned{1});
-                    hullPolys(end+1) = polyshape(partitioned{2});
+                    ballast = polyshape(partitioned{1})
+                    if ballast.area > 0
+                        ballastPolys(end+1) = ballast;
+                    end
+                    hull = polyshape(partitioned{2});
+                    if hull.area > 0
+                        hullPolys(end+1) = hull;
+                    end
                 end
             else
                 if boatInterior.area > 0
                     hullPolys(end+1) = boatInterior;
                 end
             end
-            ballastPoly = union(ballastPolys);
+            if ~isempty(ballastPolys)
+                ballastPoly = union(ballastPolys);
+            else
+                ballastPoly = polyshape();
+            end
             regions = ballastPoly.regions;
             for k=1:length(regions)
                 allRegions{end+1} = getCCWVertices(regions(k));
@@ -292,7 +334,11 @@ function customBoat3d()
                 allMaterials{end+1} = 'Gazebo/Red';
                 allZs(end+1) = Z(slice);
             end
-            hullPoly = union(hullPolys);
+            if ~isempty(hullPolys)
+                hullPoly = union(hullPolys);
+            else
+                hullPoly = polyshape();
+            end
             regions = hullPoly.regions;
             for k=1:length(regions)
                 allRegions{end+1} = getCCWVertices(regions(k));
@@ -359,8 +405,9 @@ function customBoat3d()
     exportedBoatLength = 0.2032;% m (or 8 inches)
     % use this if you want to model the shell added by a 3d print
     perimeterThickness = 0.6/1000*boatLength/exportedBoatLength;   % 0.6 is thickness in millimeters
-    % eventually we can use the meshboat in the simulator as it will be
-    % much more computationally efficient.  For now, just leave as is.
+    % this is a global variable that is used for visualizing the boat cross
+    % sections
+    crossSectionFigure = [];
     createMeshBoat = true;
     
     longitudinalShapeParameter = 4;
