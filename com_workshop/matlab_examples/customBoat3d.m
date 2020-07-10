@@ -3,11 +3,16 @@
 %   (https://community.ultimaker.com/topic/9167-is-there-a-way-to-change-infill-percentage-at-a-certain-height/)
 %   Different infill in the same part
 %   (https://3dprinting.stackexchange.com/questions/6522/different-infill-in-the-same-part)
-%   The mesh fails the watertight check, might need to validate it against
-%   this criterion: https://axom.readthedocs.io/en/develop/axom/quest/docs/sphinx/check_and_repair.html
-%   The most likely culprit is the interface between the deck of the boat
-%   and the hull (the triangles used on the sides to form the interface to
-%   the deck are not the same as those used on top).
+% TODO:
+%   - The mesh fails the watertight check, might need to validate it against
+%       this criterion: https://axom.readthedocs.io/en/develop/axom/quest/docs/sphinx/check_and_repair.html
+%       The most likely culprit is the interface between the deck of the boat
+%       and the hull (the triangles used on the sides to form the interface to
+%       the deck are not the same as those used on top).
+%   - Disable slicing of boat interior if thickness set to 0 (for
+%   computational reasons)
+%
+
 function customBoat3d()
     function closeRequest(src,callbackdata)
         % Close request function 
@@ -91,37 +96,55 @@ function customBoat3d()
         % right now we are just worried about the 2D CoM (could add 3D)
         CoM = [0 0];
         allSlices = {};
+
         for slice=1:length(Z)
             loftedPoints = [allPoints(:,1) allPoints(:,2) + loftCurve(slice)];
             % redo so the polygon starts at the lowest point
             loftedPoints = loftedPoints(1:end-1,:);
             [minlevel, minind] = min(loftedPoints(:,2));
             loftedPoints = [loftedPoints(minind:end,:); loftedPoints(1:minind,:)];
-            if minlevel < ballastLevel
-                partitioned = chopPolygon(loftedPoints, [ballastLevel maxY]);
-                ballastVerts = partitioned{1};
-                hullVerts = partitioned{2};
-            else
-                partitioned = chopPolygon(loftedPoints, maxY);
-                ballastVerts = zeros(0,2);
-                hullVerts = partitioned{1};
+            partitioned = chopPolygon(loftedPoints, maxY);
+            fullCrossSectionPoly = polyshape(partitioned{1});
+            boatInterior = polybuffer(fullCrossSectionPoly,-perimeterThickness,'JointType','miter');
+            perimeterPolygon = subtract(fullCrossSectionPoly, boatInterior);
+            if perimeterPolygon.area ~= 0
+                [perimeterCoMX, perimeterCoMY] = perimeterPolygon.centroid;
+                CoM = CoM + [perimeterCoMX perimeterCoMY]*perimeterPolygon.area*ballastDensityRatio*deltaz;
             end
-            unionPoly = union(polyshape(hullVerts), polyshape(ballastVerts));
-            if unionPoly.area == 0
+            totalWeightedVolume = totalWeightedVolume + perimeterPolygon.area*ballastDensityRatio*deltaz;
+            totalVolume = totalVolume + perimeterPolygon.area*deltaz;
+
+            interiorRegions = boatInterior.regions;
+            hullPolys = polyshape();
+            ballastPolys = polyshape();
+            if minlevel < ballastLevel
+                for k=1:length(interiorRegions)
+                    partitioned = chopPolygon(getCCWVertices(interiorRegions(k)), ballastLevel);
+                    ballastPolys(end+1) = polyshape(partitioned{1});
+                    hullPolys(end+1) = polyshape(partitioned{2});
+                end
+            else
+                if boatInterior.area > 0
+                    hullPolys(end+1) = boatInterior;
+                end
+            end
+            if fullCrossSectionPoly.area == 0
                 continue;
             end
-            regions = unionPoly.regions;
+            regions = fullCrossSectionPoly.regions;
             for k=1:length(regions)
                 allSlices{end+1} = getCCWVertices(regions(k));
             end
-            regions = polyshape(ballastVerts).regions;
+            ballastPoly = union(ballastPolys);
+            regions = ballastPoly.regions;
             for k=1:length(regions)
                 [~,xcomRegion,ycomRegion] = cumulativeArea(getCCWVertices(regions(k)),Inf); % Inf means use the whole polygon
                 CoM = CoM + [xcomRegion ycomRegion]*regions(k).area*ballastDensityRatio*deltaz;
                 totalVolume = totalVolume + regions(k).area*deltaz;
                 totalWeightedVolume = totalWeightedVolume + regions(k).area*ballastDensityRatio*deltaz;
             end
-            regions = polyshape(hullVerts).regions;
+            hullPoly = union(hullPolys);
+            regions = hullPoly.regions;
             for k=1:length(regions)
                 [~,xcomRegion,ycomRegion] = cumulativeArea(getCCWVertices(regions(k)),Inf); % Inf means use the whole polygon
                 CoM = CoM + [xcomRegion ycomRegion]*regions(k).area*densityRatio*deltaz;
@@ -223,23 +246,54 @@ function customBoat3d()
             loftedPoints = loftedPoints(1:end-1,:);
             [minlevel, minind] = min(loftedPoints(:,2));
             loftedPoints = [loftedPoints(minind:end,:); loftedPoints(1:minind,:)];
-            if minlevel < ballastLevel
-                partitioned = chopPolygon(loftedPoints, [ballastLevel maxY]);
-                ballastVerts = partitioned{1};
-                hullVerts = partitioned{2};
-            else
-                partitioned = chopPolygon(loftedPoints, maxY);
-                ballastVerts = zeros(0,2);
-                hullVerts = partitioned{1};
+            partitioned = chopPolygon(loftedPoints, maxY);
+            fullCrossSectionPoly = polyshape(partitioned{1});
+            boatInterior = polybuffer(fullCrossSectionPoly,-perimeterThickness,'JointType','miter');
+            perimeterPolygon = subtract(fullCrossSectionPoly, boatInterior);
+
+            if fullCrossSectionPoly.area == 0
+                continue
             end
-            regions = polyshape(ballastVerts).regions;
+            [xComPerimeter yComPerimeter] = perimeterPolygon.centroid;
+            % create a synthetic region to force the polyline function to
+            % give the correct mass and center of mass (but the moment of
+            % inertia tensor will not be correct)
+            % TODO: we would need to be able to deal with moment of inertia
+            % of a non-simple polygon (with holes)
+            fakeSquare = sqrt(perimeterPolygon.area);
+            allRegions{end+1} = [xComPerimeter - fakeSquare/2 yComPerimeter - fakeSquare/2;...
+                                  xComPerimeter + fakeSquare/2 yComPerimeter - fakeSquare/2;...
+                                  xComPerimeter + fakeSquare/2 yComPerimeter + fakeSquare/2;...
+                                  xComPerimeter - fakeSquare/2 yComPerimeter + fakeSquare/2;...
+                                  xComPerimeter - fakeSquare/2 yComPerimeter - fakeSquare/2];
+            allComponentDensityRatios(end+1) = ballastDensityRatio;
+            allMaterials{end+1} = 'Gazebo/Red';
+            allZs(end+1) = Z(slice);
+                
+            interiorRegions = boatInterior.regions;
+            hullPolys = polyshape();
+            ballastPolys = polyshape();
+            if minlevel < ballastLevel
+                for k=1:length(interiorRegions)
+                    partitioned = chopPolygon(getCCWVertices(interiorRegions(k)), ballastLevel);
+                    ballastPolys(end+1) = polyshape(partitioned{1});
+                    hullPolys(end+1) = polyshape(partitioned{2});
+                end
+            else
+                if boatInterior.area > 0
+                    hullPolys(end+1) = boatInterior;
+                end
+            end
+            ballastPoly = union(ballastPolys);
+            regions = ballastPoly.regions;
             for k=1:length(regions)
                 allRegions{end+1} = getCCWVertices(regions(k));
                 allComponentDensityRatios(end+1) = ballastDensityRatio;
                 allMaterials{end+1} = 'Gazebo/Red';
                 allZs(end+1) = Z(slice);
             end
-            regions = polyshape(hullVerts).regions;
+            hullPoly = union(hullPolys);
+            regions = hullPoly.regions;
             for k=1:length(regions)
                 allRegions{end+1} = getCCWVertices(regions(k));
                 allComponentDensityRatios(end+1) = densityRatio;
@@ -288,18 +342,23 @@ function customBoat3d()
     % x-limits of hull cross section visualization
     minX = -2;
     maxX = 2;
-    % the ratio of density of non-ballast mateiral to water
-    densityRatio = 0.25;
+
     % the hull below this level is ballast
     ballastLevel = minY;
     % density ratio of ballast is 1.24 (solid PLA)
     ballastDensityRatio = 1.24;
+    % the ratio of density of non-ballast material to water (for
+    % compatibility with 3d print services, set it to 20% of the density of
+    % solid PLA
+    densityRatio = ballastDensityRatio*0.20;
     % average infill (useful for ordering 3d prints)
     averageInfill = 0;
     % the boat length (this is the extrusion dimension)
     boatLength = 5;
     % exported boat length in meters (if creating a 3d print)
     exportedBoatLength = 0.2032;% m (or 8 inches)
+    % use this if you want to model the shell added by a 3d print
+    perimeterThickness = 0.6/1000*boatLength/exportedBoatLength;   % 0.6 is thickness in millimeters
     % eventually we can use the meshboat in the simulator as it will be
     % much more computationally efficient.  For now, just leave as is.
     createMeshBoat = true;
