@@ -230,15 +230,17 @@ function customBoat3d()
         x = eventDat.IntersectionPoint(1);
         deltaz = Z(2)-Z(1);
         [~,waterline,~] = getWaterLineHelper(x,CoM,totalWeightedVolume,allSlices,deltaz);
-        msg = rosmessage(updateModelSvc);
-        msg.ModelState.ModelName = 'customboat';
-        msg.ModelState.Pose.Position.Z = -waterline;
-        quat = eul2quat([0 deg2rad(x) pi/2]);
-        msg.ModelState.Pose.Orientation.W = quat(1);
-        msg.ModelState.Pose.Orientation.X = quat(2);
-        msg.ModelState.Pose.Orientation.Y = quat(3);
-        msg.ModelState.Pose.Orientation.Z = quat(4);
-        call(updateModelSvc, msg);
+        if ~useWithoutGazebo
+            msg = rosmessage(updateModelSvc);
+            msg.ModelState.ModelName = 'customboat';
+            msg.ModelState.Pose.Position.Z = -waterline;
+            quat = eul2quat([0 deg2rad(x) pi/2]);
+            msg.ModelState.Pose.Orientation.W = quat(1);
+            msg.ModelState.Pose.Orientation.X = quat(2);
+            msg.ModelState.Pose.Orientation.Y = quat(3);
+            msg.ModelState.Pose.Orientation.Z = quat(4);
+            call(updateModelSvc, msg);
+        end
         disp(['Selected angle ',num2str(x),' degrees']);
     end
 
@@ -380,8 +382,10 @@ function customBoat3d()
             msg = rosmessage(pauseSvc);
             call(pauseSvc, msg);
         end
-        % setting a yaw of pi/2 causes the boat to orirent in an upright stance
-        spawnModel('customboat',xmlwrite(sdfElem), 0, 0, 1, pi/2, 0, 0, true);
+        if ~useWithoutGazebo
+            % setting a yaw of pi/2 causes the boat to orirent in an upright stance
+            spawnModel('customboat',xmlwrite(sdfElem), 0, 0, 1, pi/2, 0, 0, true);
+        end
         spawned = true;
     end
 
@@ -406,6 +410,9 @@ function customBoat3d()
                 exportBoatForPrinting(scaleFactor, allPoints, shiftedZs, loftCurve, maxY, ballastLevel, averageInfill, f);
         end
     end
+
+    % allow usage without being connected to Gazebo simulataor
+    useWithoutGazebo = false;
 
     % track whether the boat has been spawned in Gazebo
     spawned = false;
@@ -445,29 +452,33 @@ function customBoat3d()
     Z = linspace(-boatLength/2, boatLength/2, 200);
     Z = Z - (Z(2)-Z(1))/2;  % maintain a Z center of mass of 0
     loftCurve = abs(2.*(Z + (Z(2)-Z(1))/2)./boatLength).^longitudinalShapeParameter;
-    getPhysicsClient = rossvcclient('/gazebo/get_physics_properties');
-    m = rosmessage(getPhysicsClient);
-    physicsProperties = call(getPhysicsClient, m);
+    if ~useWithoutGazebo
+        getPhysicsClient = rossvcclient('/gazebo/get_physics_properties');
+        m = rosmessage(getPhysicsClient);
+        physicsProperties = call(getPhysicsClient, m);
 
-    setPhysicsClient = rossvcclient('/gazebo/set_physics_properties');
-    m = rosmessage(setPhysicsClient);
-    if createMeshBoat
-        m.TimeStep = 0.005;
-        m.MaxUpdateRate = 200;
-    else
-        m.TimeStep = 0.01;
-        m.MaxUpdateRate = 100;
+        setPhysicsClient = rossvcclient('/gazebo/set_physics_properties');
+        m = rosmessage(setPhysicsClient);
+        if createMeshBoat
+            m.TimeStep = 0.005;
+            m.MaxUpdateRate = 200;
+        else
+            m.TimeStep = 0.01;
+            m.MaxUpdateRate = 100;
+        end
+        m.Gravity = physicsProperties.Gravity;
+        m.OdeConfig = physicsProperties.OdeConfig;
+        call(setPhysicsClient, m);
     end
-    m.Gravity = physicsProperties.Gravity;
-    m.OdeConfig = physicsProperties.OdeConfig;
-    call(setPhysicsClient, m);
 
 	f = figure('CloseRequestFcn',@closeRequest);
     subplot(7,1,4:6);
-    % used to pause the simulation when a new boat is spawned
-    pauseSvc = rossvcclient('/gazebo/pause_physics');
-    % used for putting the boat at various angles
-    updateModelSvc = rossvcclient('gazebo/set_model_state');
+    if ~useWithoutGazebo
+        % used to pause the simulation when a new boat is spawned
+        pauseSvc = rossvcclient('/gazebo/pause_physics');
+        % used for putting the boat at various angles
+        updateModelSvc = rossvcclient('gazebo/set_model_state');
+    end
     % populate the hull with these two points
     startPoint = [0 0];
     endPoint = [0 1];

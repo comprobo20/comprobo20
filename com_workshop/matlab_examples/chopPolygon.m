@@ -1,7 +1,11 @@
 % points = [0 0; 1 0; 2 1; 0 2; -2 1; -1 0; 0 0]
 % chopPolygons(points, [0.5, 1]);
 function polygonQueue = chopPolygon(points, verticalCuts)
-currRegion = 0;     % we assume the first point is below vertical cuts
+% put lowest point first since we assume the first point is below vertical cuts
+pointsTmp = points(1:end-1,:);
+[minlevel, minind] = min(pointsTmp(:,2));
+points = [pointsTmp(minind:end,:); pointsTmp(1:minind,:)];
+currRegion = 0;
 polygonQueue = cell(length(verticalCuts)+1,1);
 for i = 1:size(polygonQueue,1)
     polygonQueue{i} = zeros(0,2);
@@ -41,6 +45,8 @@ for i = 2:size(points,1)
 end
 % close the other queues
 for i=2:size(polygonQueue,1)
-    polygonQueue{i,1}(end+1,:) = polygonQueue{i,1}(1,:);
+    if size(polygonQueue{i,1},1) > 0
+        polygonQueue{i,1}(end+1,:) = polygonQueue{i,1}(1,:);
+    end
 end
 end
