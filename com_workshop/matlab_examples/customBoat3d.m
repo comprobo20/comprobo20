@@ -41,7 +41,7 @@ function customBoat3d()
     end
 
     function [torque,d,CoM] = getWaterLineHelper(theta, CoM, densityRatioWeightedVolume, allSlices, deltaZ)
-        mass = densityRatioWeightedVolume*1000;%Kg
+        mass = densityRatioWeightedVolume*1000; %Kg
         volume_displaced_at_eq = densityRatioWeightedVolume;
 
         % define the direction of gravity
@@ -61,6 +61,29 @@ function customBoat3d()
                        -sind(theta) cosd(theta)]*CoM';
         torque = cross([0,ycob-rotated_com(1),zcob-rotated_com(2)],-down*mass*9.8);%Nm
         torque = torque(1);
+    end
+
+    function [adjustArea CoMX, CoMY] = adjustForBoatDeck(perimeterCrossSection)
+        % This is only an approximation as it doesn't account for overlap
+        % between the deck section and the sides
+        adjustArea = 0;
+        CoMX = 0;
+        CoMY = 0;
+        for i=1:size(perimeterCrossSection.Vertices,1)
+            v1 = perimeterCrossSection.Vertices(i,:);
+            v2 = perimeterCrossSection.Vertices(mod(i, size(perimeterCrossSection.Vertices,1))+1,:);
+            if v1(2) == maxY && v2(2) == maxY
+                % chop off some area
+                segmentArea = -abs(v1(1) - v2(1))*0.4/1000*boatLength/exportedBoatLength;
+                segmentCoMX = (v1(1) + v2(1))/2;
+                segmentCoMY = maxY - perimeterThickness + 0.2/1000*boatLength/exportedBoatLength;
+                adjustArea = adjustArea + segmentArea;
+                CoMX = CoMX + segmentArea*segmentCoMX;
+                CoMY = CoMY + segmentArea*segmentCoMY;
+            end
+        end
+        CoMX = CoMX/adjustArea;
+        CoMY = CoMY/adjustArea;
     end
 
     function vertices = getCCWVertices(myPoly)
@@ -113,6 +136,11 @@ function customBoat3d()
             if perimeterPolygon.area ~= 0
                 [perimeterCoMX, perimeterCoMY] = perimeterPolygon.centroid;
                 CoM = CoM + [perimeterCoMX perimeterCoMY]*perimeterPolygon.area*ballastDensityRatio*deltaz;
+                [adjustArea, adjustCoMX, adjustCoMY] = adjustForBoatDeck(perimeterPolygon);
+                CoM = CoM + [adjustCoMX adjustCoMY]*adjustArea*ballastDensityRatio*deltaz;
+                totalWeightedVolume = totalWeightedVolume + perimeterPolygon.area*ballastDensityRatio*deltaz;
+                totalVolume = totalVolume + perimeterPolygon.area*deltaz;
+                totalWeightedVolume = totalWeightedVolume + adjustArea*ballastDensityRatio*deltaz
             end
             if visualize
                 set(0,'CurrentFigure',crossSectionFigure);
@@ -122,8 +150,6 @@ function customBoat3d()
                 ylim([minY maxY+yBuffer]);
                 hold on;
             end
-            totalWeightedVolume = totalWeightedVolume + perimeterPolygon.area*ballastDensityRatio*deltaz;
-            totalVolume = totalVolume + perimeterPolygon.area*deltaz;
 
             interiorRegions = boatInterior.regions;
             hullPolys = polyshape.empty;
@@ -204,7 +230,6 @@ function customBoat3d()
         x = eventDat.IntersectionPoint(1);
         deltaz = Z(2)-Z(1);
         [~,waterline,~] = getWaterLineHelper(x,CoM,totalWeightedVolume,allSlices,deltaz);
-
         msg = rosmessage(updateModelSvc);
         msg.ModelState.ModelName = 'customboat';
         msg.ModelState.Pose.Position.Z = -waterline;
@@ -287,17 +312,20 @@ function customBoat3d()
                 continue
             end
             [xComPerimeter yComPerimeter] = perimeterPolygon.centroid;
+            [adjustArea, adjustCoMX, adjustCoMY] = adjustForBoatDeck(perimeterPolygon);
+            shiftedCoMX = (xComPerimeter*perimeterPolygon.area + adjustArea*adjustCoMX)/(perimeterPolygon.area+adjustArea);
+            shiftedCoMY = (yComPerimeter*perimeterPolygon.area + adjustArea*adjustCoMY)/(perimeterPolygon.area+adjustArea);
             % create a synthetic region to force the polyline function to
             % give the correct mass and center of mass (but the moment of
             % inertia tensor will not be correct)
             % TODO: we would need to be able to deal with moment of inertia
             % of a non-simple polygon (with holes)
-            fakeSquare = sqrt(perimeterPolygon.area);
-            allRegions{end+1} = [xComPerimeter - fakeSquare/2 yComPerimeter - fakeSquare/2;...
-                                  xComPerimeter + fakeSquare/2 yComPerimeter - fakeSquare/2;...
-                                  xComPerimeter + fakeSquare/2 yComPerimeter + fakeSquare/2;...
-                                  xComPerimeter - fakeSquare/2 yComPerimeter + fakeSquare/2;...
-                                  xComPerimeter - fakeSquare/2 yComPerimeter - fakeSquare/2];
+            fakeSquare = sqrt(perimeterPolygon.area+adjustArea);
+            allRegions{end+1} = [shiftedCoMX - fakeSquare/2 shiftedCoMY - fakeSquare/2;...
+                                  shiftedCoMX + fakeSquare/2 shiftedCoMY - fakeSquare/2;...
+                                  shiftedCoMX + fakeSquare/2 shiftedCoMY + fakeSquare/2;...
+                                  shiftedCoMX - fakeSquare/2 shiftedCoMY + fakeSquare/2;...
+                                  shiftedCoMX - fakeSquare/2 shiftedCoMY - fakeSquare/2];
             allComponentDensityRatios(end+1) = ballastDensityRatio;
             allMaterials{end+1} = 'Gazebo/Red';
             allZs(end+1) = Z(slice);
@@ -394,9 +422,10 @@ function customBoat3d()
     % density ratio of ballast is 1.24 (solid PLA)
     ballastDensityRatio = 1.24;
     % the ratio of density of non-ballast material to water (for
-    % compatibility with 3d print services, set it to 20% of the density of
-    % solid PLA
-    densityRatio = ballastDensityRatio*0.20;
+    % compatibility with 3d print services, simulate 20% infill
+    % solid PLA (based on Prusa Slicer, the density of 20% infill runs a
+    % little higher than 20% of the density of solid PLA)s
+    densityRatio = ballastDensityRatio*0.2113;
     % average infill (useful for ordering 3d prints)
     averageInfill = 0;
     % the boat length (this is the extrusion dimension)
@@ -404,7 +433,9 @@ function customBoat3d()
     % exported boat length in meters (if creating a 3d print)
     exportedBoatLength = 0.2032;% m (or 8 inches)
     % use this if you want to model the shell added by a 3d print
-    perimeterThickness = 0.6/1000*boatLength/exportedBoatLength;   % 0.6 is thickness in millimeters
+    % 1.2 is roughly the thickness in millimeters when printing with 3
+    % walls and 6 layers top and bottom
+    perimeterThickness = 1.2/1000*boatLength/exportedBoatLength;
     % this is a global variable that is used for visualizing the boat cross
     % sections
     crossSectionFigure = [];
@@ -414,7 +445,6 @@ function customBoat3d()
     Z = linspace(-boatLength/2, boatLength/2, 200);
     Z = Z - (Z(2)-Z(1))/2;  % maintain a Z center of mass of 0
     loftCurve = abs(2.*(Z + (Z(2)-Z(1))/2)./boatLength).^longitudinalShapeParameter;
-    
     getPhysicsClient = rossvcclient('/gazebo/get_physics_properties');
     m = rosmessage(getPhysicsClient);
     physicsProperties = call(getPhysicsClient, m);
@@ -444,7 +474,7 @@ function customBoat3d()
     allPoints = [startPoint; endPoint];
 
     userPoints = [];
-    % This was added to make a boat for John (TODO: remove)
+    % This was added to make a boat for John (useful for testing purposes)
     populateWithPolyBoatTmp = false;
     if populateWithPolyBoatTmp
         polyboatX = linspace(1/20,1,20);
