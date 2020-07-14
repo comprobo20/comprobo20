@@ -137,11 +137,13 @@ function customBoat3d()
             if perimeterPolygon.area ~= 0
                 [perimeterCoMX, perimeterCoMY] = perimeterPolygon.centroid;
                 CoM = CoM + [perimeterCoMX perimeterCoMY]*perimeterPolygon.area*ballastDensityRatio*deltaz;
-                [adjustArea, adjustCoMX, adjustCoMY] = adjustForBoatDeck(perimeterPolygon);
-                CoM = CoM + [adjustCoMX adjustCoMY]*adjustArea*ballastDensityRatio*deltaz;
                 totalWeightedVolume = totalWeightedVolume + perimeterPolygon.area*ballastDensityRatio*deltaz;
+                [adjustArea, adjustCoMX, adjustCoMY] = adjustForBoatDeck(perimeterPolygon);
+                if adjustArea ~= 0
+                    CoM = CoM + [adjustCoMX adjustCoMY]*adjustArea*ballastDensityRatio*deltaz;
+                    totalWeightedVolume = totalWeightedVolume + adjustArea*ballastDensityRatio*deltaz
+                end
                 totalVolume = totalVolume + perimeterPolygon.area*deltaz;
-                totalWeightedVolume = totalWeightedVolume + adjustArea*ballastDensityRatio*deltaz
             end
             if visualize
                 set(0,'CurrentFigure',crossSectionFigure);
@@ -314,10 +316,14 @@ function customBoat3d()
             if fullCrossSectionPoly.area == 0
                 continue
             end
-            [xComPerimeter yComPerimeter] = perimeterPolygon.centroid;
+            [xComPerimeter, yComPerimeter] = perimeterPolygon.centroid;
             [adjustArea, adjustCoMX, adjustCoMY] = adjustForBoatDeck(perimeterPolygon);
-            shiftedCoMX = (xComPerimeter*perimeterPolygon.area + adjustArea*adjustCoMX)/(perimeterPolygon.area+adjustArea);
-            shiftedCoMY = (yComPerimeter*perimeterPolygon.area + adjustArea*adjustCoMY)/(perimeterPolygon.area+adjustArea);
+            shiftedCoMX = xComPerimeter*perimeterPolygon.area/(perimeterPolygon.area+adjustArea);
+            shiftedCoMY = yComPerimeter*perimeterPolygon.area/(perimeterPolygon.area+adjustArea);
+            if adjustArea ~= 0
+                shiftedCoMX = shiftedCoMX + adjustArea*adjustCoMX/(perimeterPolygon.area+adjustArea);
+                shiftedCoMY = shiftedCoMY + adjustArea*adjustCoMY/(perimeterPolygon.area+adjustArea);
+            end
             % create a synthetic region to force the polyline function to
             % give the correct mass and center of mass (but the moment of
             % inertia tensor will not be correct)
