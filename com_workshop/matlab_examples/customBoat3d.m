@@ -74,9 +74,10 @@ function customBoat3d()
             v2 = perimeterCrossSection.Vertices(mod(i, size(perimeterCrossSection.Vertices,1))+1,:);
             if v1(2) == maxY && v2(2) == maxY
                 % chop off some area
-                segmentArea = -abs(v1(1) - v2(1))*0.4/1000*boatLength/exportedBoatLength;
+                segmentWidth = max(0,abs(v1(1) - v2(1))-2*perimeterThickness);
+                segmentArea = -segmentWidth*perimeterThickness/3;
                 segmentCoMX = (v1(1) + v2(1))/2;
-                segmentCoMY = maxY - perimeterThickness + 0.2/1000*boatLength/exportedBoatLength;
+                segmentCoMY = maxY - perimeterThickness + perimeterThickness/6;
                 adjustArea = adjustArea + segmentArea;
                 CoMX = CoMX + segmentArea*segmentCoMX;
                 CoMY = CoMY + segmentArea*segmentCoMY;
