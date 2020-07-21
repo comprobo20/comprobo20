@@ -293,11 +293,22 @@ function customBoat3d()
         if createMeshBoat
             shiftedZs = Z + (Z(2)-Z(1))/2;
             stlFileName = makeLoftedMesh(allPoints(:,1), allPoints(:,2), maxY, shiftedZs, loftCurve, false);
-            disp('Please run ./sync_boats.sh in Parallels');
-            % ALSO copy the media directory from /usr/share/gazebo-9/media to ~/gzweb/http/client/assets
-            pause;
+
             [~, modelName, ~] =fileparts(stlFileName);
             meshBoatSTLURI = ['model://',modelName,'/meshes/',stlFileName];
+            if ismac || ispc
+                % we are running through docker.  Eventually we will use
+                % docker cp to sync the files to models directory and the
+                % gzweb directory
+                disp('Please run ./sync_boats.sh in Parallels');
+                % ALSO copy the media directory from /usr/share/gazebo-9/media to ~/gzweb/http/client/assets
+                pause;
+            else
+                % this is when we are running outside of Docker
+                mkdir(fullfile('~','.gazebo'));
+                mkdir(fullfile('~','.gazebo','models'));
+                copyfile(fullfile('./GazeboStaging',modelName),fullfile('~','.gazebo','models',modelName));
+            end
         end
         % spawn the model
         doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
