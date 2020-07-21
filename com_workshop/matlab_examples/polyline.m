@@ -1,4 +1,4 @@
-function polyline(doc, modelElem, name, componentDensityRatios, height, regions, materials, isBoat, Z, meshBoatSTLPath)
+function polyline(doc, modelElem, name, componentDensityRatios, height, regions, materials, isBoat, Z, meshBoatSTLURI)
     % TODO: need to refactor the part about the mesh.  The reason for the
     % overlap currently is from the need to calculate the intertial
     % parameters
@@ -9,15 +9,9 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
         isBoat = false;
     end
     if nargin < 9
-        meshBoatSTLPath = '';
-    else
-        if ismac
-            % hack to work with parallels on my machine
-            startHomeRelativePath = strfind(meshBoatSTLPath,'pruvolo')+length('pruvolo');
-            meshBoatSTLPath = ['/media/psf/Home',meshBoatSTLPath(startHomeRelativePath:end)];
-        end
+        meshBoatSTLURI = '';
     end
-    useSTLOverride = ~isempty(meshBoatSTLPath);
+    useSTLOverride = ~isempty(meshBoatSTLURI);
     % precision of output (extra digits help when polygon points are close
     % together)
     num2strPrecision = 10;
@@ -104,7 +98,7 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
         visualGeometry.appendChild(meshElem);
         uriElem = doc.createElement('uri');
         meshElem.appendChild(uriElem);
-        uriElem.setTextContent(['file://',meshBoatSTLPath]);
+        uriElem.setTextContent(meshBoatSTLURI);
         visualMaterial = doc.createElement('material');
         visual.appendChild(visualMaterial);
         scriptMaterial = doc.createElement('script');
@@ -114,8 +108,7 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
         uriMaterial.setTextContent('file://media/materials/scripts/gazebo.material');
         nameMaterial = doc.createElement('name');
         scriptMaterial.appendChild(nameMaterial);
-        nameMaterial.setTextContent('Gazebo/Gray');
-
+        nameMaterial.setTextContent('Gazebo/WoodPallet')
         collision = doc.createElement('collision');
         collision.setAttribute('name', java.util.UUID.randomUUID.toString());
         polyline.appendChild(collision);
@@ -125,7 +118,7 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
         collisionGeometry.appendChild(collisionMesh);
         collisionUriElem = doc.createElement('uri');
         collisionMesh.appendChild(collisionUriElem);
-        collisionUriElem.setTextContent(['file://',meshBoatSTLPath]);
+        collisionUriElem.setTextContent(meshBoatSTLURI);
 
         surface = doc.createElement('surface');
         collision.appendChild(surface);
@@ -286,7 +279,7 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
             buoyancyGeometry.appendChild(buoyancyMesh);
             buoyancyUriElem = doc.createElement('uri');
             buoyancyMesh.appendChild(buoyancyUriElem);
-            buoyancyUriElem.setTextContent(['file://',meshBoatSTLPath]);
+            buoyancyUriElem.setTextContent(meshBoatSTLURI);
         else
             for i=1:length(regions)
                 points = regions{i};

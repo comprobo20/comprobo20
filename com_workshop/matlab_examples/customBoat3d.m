@@ -283,7 +283,7 @@ function customBoat3d()
         if nargin < 1
             shouldPause = false;
         end
-        meshBoatSTLPath = '';
+        meshBoatSTLURI = '';
         poly = polyshape(allPoints);
         if poly.NumRegions ~= 1 | poly.NumHoles ~= 0
             disp("Can't spawn model as it has holes or intersections");
@@ -293,7 +293,11 @@ function customBoat3d()
         if createMeshBoat
             shiftedZs = Z + (Z(2)-Z(1))/2;
             stlFileName = makeLoftedMesh(allPoints(:,1), allPoints(:,2), maxY, shiftedZs, loftCurve, false);
-            meshBoatSTLPath = fullfile(pwd,stlFileName)
+            disp('Please run ./sync_boats.sh in Parallels');
+            % ALSO copy the media directory from /usr/share/gazebo-9/media to ~/gzweb/http/client/assets
+            pause;
+            [~, modelName, ~] =fileparts(stlFileName);
+            meshBoatSTLURI = ['model://',modelName,'/meshes/',stlFileName];
         end
         % spawn the model
         doc = com.mathworks.xml.XMLUtils.createDocument('sdf');
@@ -384,7 +388,7 @@ function customBoat3d()
                 allZs(end+1) = Z(slice);
             end
         end
-        polyline(doc, modelElem, 'customBoat', allComponentDensityRatios, Z(2)-Z(1), allRegions, allMaterials, true, allZs, meshBoatSTLPath);
+        polyline(doc, modelElem, 'customBoat', allComponentDensityRatios, Z(2)-Z(1), allRegions, allMaterials, true, allZs, meshBoatSTLURI);
         if shouldPause
             msg = rosmessage(pauseSvc);
             call(pauseSvc, msg);
@@ -415,6 +419,7 @@ function customBoat3d()
                 % each end of the boat)
                 shiftedZs = Z + (Z(2)-Z(1))/2;
                 exportBoatForPrinting(scaleFactor, allPoints, shiftedZs, loftCurve, maxY, ballastLevel, averageInfill, f);
+                disp(['predicted offset CoM offset ', num2str(maxY*scaleFactor-CoM(2)*scaleFactor)]);
         end
     end
 
