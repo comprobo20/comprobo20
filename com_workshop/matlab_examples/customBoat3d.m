@@ -300,9 +300,9 @@ function customBoat3d()
                 % we are running through docker.  Eventually we will use
                 % docker cp to sync the files to models directory and the
                 % gzweb directory
-                disp('Please run ./sync_boats.sh in Parallels');
-                % ALSO copy the media directory from /usr/share/gazebo-9/media to ~/gzweb/http/client/assets
-                pause;
+                modelFolderPath = fullfile('GazeboStaging',modelName);
+                system(['/usr/local/bin/docker cp ',modelFolderPath,' boat:/root/.gazebo/models']);
+                system(['/usr/local/bin/docker cp ',modelFolderPath,' boat:/root/gzweb/http/client/assets']);
             else
                 % this is when we are running outside of Docker
                 mkdir(fullfile('~','.gazebo'));
@@ -406,7 +406,7 @@ function customBoat3d()
         end
         if ~useWithoutGazebo
             % setting a yaw of pi/2 causes the boat to orirent in an upright stance
-            spawnModel('customboat',xmlwrite(sdfElem), 0, 0, 1, pi/2, 0, 0, true);
+            spawnModel('customboat',xmlwrite(sdfElem), 0, 0, 1, pi/2, 0, 0, true, deleteModelSvc, spawnModelSvc);
         end
         spawned = true;
     end
@@ -499,6 +499,10 @@ function customBoat3d()
     if ~useWithoutGazebo
         % used to pause the simulation when a new boat is spawned
         pauseSvc = rossvcclient('/gazebo/pause_physics');
+        % used to delete the old boat when a new one is spawned
+        deleteModelSvc = rossvcclient('/gazebo/delete_model');
+        % used to spawn the new boat
+        spawnModelSvc = rossvcclient('/gazebo/spawn_sdf_model');
         % used for putting the boat at various angles
         updateModelSvc = rossvcclient('gazebo/set_model_state');
     end
