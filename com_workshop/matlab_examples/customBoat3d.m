@@ -472,7 +472,7 @@ function customBoat3d()
     createMeshBoat = true;
     
     longitudinalShapeParameter = 4;
-    Z = linspace(-boatLength/2, boatLength/2, 200);
+    Z = linspace(-boatLength/2, boatLength/2, 50);
     Z = Z - (Z(2)-Z(1))/2;  % maintain a Z center of mass of 0
     loftCurve = abs(2.*(Z + (Z(2)-Z(1))/2)./boatLength).^longitudinalShapeParameter;
     if ~useWithoutGazebo

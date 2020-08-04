@@ -16,8 +16,8 @@ function polyline(doc, modelElem, name, componentDensityRatios, height, regions,
     % together)
     num2strPrecision = 10;
     % drag in case it's a boat
-    linearDrag = 2;
-    angularDrag = 5;
+    linearDrag = .2;
+    angularDrag = .5;
     if ~iscell(regions)
         % assume one region with the Z base of 0
         regions = {regions};
