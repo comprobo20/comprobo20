@@ -6,7 +6,7 @@
   <arg name="load_camera" default="false"/>
   <arg name="use_gpu_laser" default="false"/>
   <param name="robot_description"
-        command="$(find xacro)/xacro.py '$(find neato_description)/urdf/neato_standalone.urdf.xacro' load_camera:=$(arg load_camera) use_gpu_laser:=$(arg use_gpu_laser)"/>
+        command="$(find xacro)/xacro '$(find neato_description)/urdf/neato_standalone.urdf.xacro' load_camera:=$(arg load_camera) use_gpu_laser:=$(arg use_gpu_laser)"/>
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_$(arg robot_name)" 
         args="-x 0.0 -y 0.0 -z 1.5 -unpause -urdf -param robot_description -model $(arg robot_name)" respawn="false">
   </node>
