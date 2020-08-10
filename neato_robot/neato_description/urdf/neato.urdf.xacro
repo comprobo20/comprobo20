@@ -283,7 +283,7 @@
     </inertial>
   </link>
 </xacro:if>
-    <neato_sim/>
+    <xacro:neato_sim/>
     
   </xacro:macro>
 </robot>
