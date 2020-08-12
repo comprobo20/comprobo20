@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import cv2
 import pickle
@@ -77,8 +77,8 @@ def compute_depths():
     kp1 = detector.detect(im1_bw)
     kp2 = detector.detect(im2_bw)
 
-    dc, des1 = extractor.compute(im1_bw,kp1)
-    dc, des2 = extractor.compute(im2_bw,kp2)
+    kp1, des1 = keypoint_algorithm.detectAndCompute(im1_bw,None)
+    kp2, des2 = keypoint_algorithm.detectAndCompute.compute(im2_bw,None)
 
     # do matches both ways so we can better screen out spurious matches
     matches = matcher.knnMatch(des1,des2,k=2)
@@ -189,8 +189,8 @@ def compute_depths():
     best_pcloud_idx = np.argmax(infront_of_camera)
     best_pcloud = pclouds[best_pcloud_idx]
 
-    print P1_possibilities[best_pcloud_idx][:,-1]
-    print acos((np.trace(P1_possibilities[best_pcloud_idx][:,0:3])-1)/2) / delta_t.to_sec()
+    print(P1_possibilities[best_pcloud_idx][:,-1])
+    print(acos((np.trace(P1_possibilities[best_pcloud_idx][:,0:3])-1)/2) / delta_t.to_sec())
 
     # scale the depths between 0 and 1 so it is easier to visualize
     depths = best_pcloud[:,2] - min(best_pcloud[:,2])
@@ -215,7 +215,7 @@ def set_corner_threshold(thresh):
     """ Sets the threshold to consider an interest point a corner.  The higher the value
         the more the point must look like a corner to be considered """
     global corner_threshold
-    corner_threshold = thresh/1000.0
+    corner_threshold = thresh/100000.0
 
 def set_ratio_threshold(thresh):
     """ Sets the ratio of the nearest to the second nearest neighbor to consider the match a good one """
@@ -263,13 +263,7 @@ if __name__ == '__main__':
     rospy.Subscriber('/camera/camera_info', CameraInfo, get_camera_info)
     rospy.Subscriber('/camera/image_raw', Image, process_image)
     rospy.Subscriber('/camera/image_rect', Image, process_image_rect)
-
-    if cv2.__version__=='3.1.0-dev':
-        detector = cv2.xfeatures2d.SIFT_create()
-        extractor = detector
-    else:
-        detector = cv2.FeatureDetector_create('SIFT')
-        extractor = cv2.DescriptorExtractor_create('SIFT')
+    keypoint_algorithm = cv2.ORB_create()
 
     matcher = cv2.BFMatcher()
 

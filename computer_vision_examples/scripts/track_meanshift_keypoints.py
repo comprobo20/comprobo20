@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """ A simple meanshift based tracker that uses matched keypoints as the
     similarity metric between the query and the training image """
@@ -18,13 +18,7 @@ class ObjectTracker(object):
         keypoints
     """
     def __init__(self, descriptor_name):
-        # currently hardcoded for SIFT
-        self.detector = cv2.xfeatures2d.SIFT_create()
-        self.extractor = self.detector
-
-        # older versions of OpenCV might need these lines instead of the ones above
-        # self.detector = cv2.FeatureDetector_create(descriptor_name)
-        # self.extractor = cv2.DescriptorExtractor_create(descriptor_name)
+        self.keypoint_algorithm = cv2.ORB_create()
 
         self.matcher = cv2.BFMatcher()
         self.query_img = None
@@ -35,6 +29,7 @@ class ObjectTracker(object):
         self.ratio_threshold = 1.0
 
         self.state = ObjectTracker.SELECTING_QUERY_IMG
+        self.query_descriptors = None
 
     def set_ratio_threshold(self,thresh):
         self.ratio_threshold = thresh
@@ -44,12 +39,12 @@ class ObjectTracker(object):
 
     def get_query_keypoints(self):
         query_img_bw = cv2.cvtColor(self.query_img, cv2.COLOR_BGR2GRAY)
-        kp = self.detector.detect(query_img_bw)
+        kp = self.keypoint_algorithm.detect(query_img_bw)
         kp = [pt
               for pt in kp if (pt.response > self.corner_threshold and
                                self.query_roi[0] <= pt.pt[0] < self.query_roi[2] and
                                self.query_roi[1] <= pt.pt[1] < self.query_roi[3])]
-        dc, des = self.extractor.compute(query_img_bw, kp)
+        _, des = self.keypoint_algorithm.compute(query_img_bw, kp)
         # remap keypoints so they are relative to the query ROI
         for pt in kp:
             pt.pt = (pt.pt[0] - self.query_roi[0], pt.pt[1] - self.query_roi[1])
@@ -60,9 +55,9 @@ class ObjectTracker(object):
         im_bw = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 
         # extract keypoints
-        training_keypoints = self.detector.detect(im_bw)
+        training_keypoints = self.keypoint_algorithm.detect(im_bw)
         # pull out descriptors from the detected keypoints
-        dc, training_descriptors = self.extractor.compute(im_bw,
+        _, training_descriptors = self.keypoint_algorithm.compute(im_bw,
                                                           training_keypoints)
         matches = self.matcher.knnMatch(self.query_descriptors,
                                         training_descriptors,
@@ -115,7 +110,7 @@ class ObjectTracker(object):
 def set_corner_threshold_callback(thresh):
     """ Sets the threshold to consider an interest point a corner.  The higher the value
         the more the point must look like a corner to be considered """
-    tracker.set_corner_threshold(thresh/1000.0)
+    tracker.set_corner_threshold(thresh/100000.0)
 
 def set_ratio_threshold_callback(ratio):
     """ Sets the ratio of the nearest to the second nearest neighbor to consider the match a good one """
@@ -171,11 +166,11 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         ret, frame = cap.read()
         frame = np.array(cv2.resize(frame,
-                                    (frame.shape[1]/2,
-                                     frame.shape[0]/2)))
+                                    (frame.shape[1]//2,
+                                     frame.shape[0]//2)))
 
         if tracker.state == tracker.SELECTING_QUERY_IMG:
-            if tracker.query_roi != None:
+            if tracker.query_roi != None and tracker.query_descriptors is not None:
                 tracker.track(frame)
 
                 # add the query image to the side

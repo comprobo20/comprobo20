@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """ Plot the depth of corresponding points.  In this case the points were identified by hand selecting
     correspondences """

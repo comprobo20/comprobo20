@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """ Explore the basics of epipolar geometry.  Click in the left pane to plot the epipolar line
     in the right image.  In this case the relationship between the two images was determined
@@ -79,13 +79,13 @@ if __name__ == '__main__':
 
     im1_pts_ud = cv2.undistortPoints(im1_pts_augmented,K,D)
     im2_pts_ud = cv2.undistortPoints(im2_pts_augmented,K,D)
-    print im1_pts_ud
+    print(im1_pts_ud)
 
     # find the essential matrix using OpenCV
     # Note: since we are using undistorted points this gives us E rather than F (as the function name would imply)
     E, mask = cv2.findFundamentalMat(im1_pts_ud,im2_pts_ud,cv2.FM_RANSAC)
     F = np.linalg.inv(K.T).dot(E).dot(np.linalg.inv(K))
-    print F
+    print(F)
     cv2.imshow("MYWIN",im)
     cv2.setMouseCallback("MYWIN",mouse_event,im)
     while not rospy.is_shutdown():

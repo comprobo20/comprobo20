@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """ A demo that shows how keypoint matches work using SIFT """
 
@@ -11,17 +11,12 @@ import rospkg
 class KeyPointMatcherDemo(object):
     """ KeyPointMatcherDemo shows the basics of interest point detection,
         descriptor extraction, and descriptor matching in OpenCV """
-    def __init__(self, im1_file, im2_file, descriptor_name):
+    def __init__(self, im1_file, im2_file):
         rospack = rospkg.RosPack()
         self.im1_file = rospack.get_path('computer_vision_examples') + '/images/' + im1_file
         self.im2_file = rospack.get_path('computer_vision_examples') + '/images/' + im2_file
 
-        self.detector = cv2.xfeatures2d.SIFT_create()
-        self.extractor = self.detector
-        # older versions of OpenCV might need these lines instead of the ones above
-        # self.detector = cv2.FeatureDetector_create(descriptor_name)
-        # self.extractor = cv2.DescriptorExtractor_create(descriptor_name)
-
+        self.keypoint_algorithm = cv2.ORB_create()
         self.matcher = cv2.BFMatcher()
         self.im = None
 
@@ -36,11 +31,8 @@ class KeyPointMatcherDemo(object):
         im1_bw = cv2.cvtColor(im1,cv2.COLOR_BGR2GRAY)
         im2_bw = cv2.cvtColor(im2,cv2.COLOR_BGR2GRAY)
 
-        kp1 = self.detector.detect(im1_bw)
-        kp2 = self.detector.detect(im2_bw)
-
-        dc, des1 = self.extractor.compute(im1_bw,kp1)
-        dc, des2 = self.extractor.compute(im2_bw,kp2)
+        kp1, des1 = self.keypoint_algorithm.detectAndCompute(im1_bw, None)
+        kp2, des2 = self.keypoint_algorithm.detectAndCompute(im2_bw, None)
 
         matches = self.matcher.knnMatch(des1,des2,k=2)
 
@@ -72,7 +64,7 @@ def set_corner_threshold(thresh):
     """ Sets the threshold to consider an interest point a corner.  The higher the value
         the more the point must look like a corner to be considered """
     global matcher
-    matcher.corner_threshold = thresh/1000.0
+    matcher.corner_threshold = thresh/100000.0
 
 def set_ratio_threshold(ratio):
     """ Sets the ratio of the nearest to the second nearest neighbor to consider the match a good one """
@@ -85,8 +77,7 @@ def mouse_event(event,x,y,flag,im):
         matcher.compute_matches()
 
 if __name__ == '__main__':
-    # descriptor can be: SIFT, SURF, BRIEF, BRISK, ORB, FREAK
-    matcher = KeyPointMatcherDemo('frame0000.jpg','frame0001.jpg','SIFT')
+    matcher = KeyPointMatcherDemo('frame0000.jpg','frame0001.jpg')
 
     # setup a basic UI
     cv2.namedWindow('UI')

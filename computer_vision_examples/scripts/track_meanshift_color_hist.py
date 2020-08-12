@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """ A meanshift tracker using color histograms """
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
 	while not rospy.is_shutdown():
 		ret, frame = cap.read()
-		frame = np.array(cv2.resize(frame,(frame.shape[1]/2,frame.shape[0]/2)))
+		frame = np.array(cv2.resize(frame,(frame.shape[1]//2,frame.shape[0]//2)))
 
 		if tracker.state == tracker.SELECTING_QUERY_IMG:
 			if tracker.query_roi != None:
