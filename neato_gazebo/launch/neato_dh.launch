@@ -1,0 +1,14 @@
+<!-- Launches Neato Gazebo simulation in Olin Dining Hall world -->
+<launch>
+  <arg name="gui" default="true"/>
+  <arg name="load_camera" default="false"/>
+  <arg name="use_gpu_laser" default="false"/>
+  
+  <include file="$(find neato_gazebo)/launch/neato_world.launch">
+   <arg name="neato_world" value="dh"/>
+   <arg name="load_camera" value="$(arg load_camera)"/>
+   <arg name="use_gpu_laser" value="$(arg use_gpu_laser)"/>
+   <arg name="x" value="2.0"/>
+   <arg name="y" value="-2.5"/>
+  </include>
+</launch>

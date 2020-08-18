@@ -4,6 +4,9 @@
   <arg name="load_camera" default="false"/>
   <arg name="use_gpu_laser" default="false"/>
   <arg name="neato_world" default="empty"/>
+  <arg name="x" default="0"/>
+  <arg name="y" default="0"/>
+  <arg name="z" default="1.5"/>
   <!-- start Gazebo with an empty world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
    <arg name="gui" value="$(arg gui)"/>
@@ -12,6 +15,9 @@
   
   <!-- spawn the robot -->
   <include file="$(find neato_gazebo)/launch/robot.launch">
+   <arg name="x" value="$(arg x)"/>
+   <arg name="y" value="$(arg y)"/>
+   <arg name="z" value="$(arg z)"/>
    <arg name="load_camera" value="$(arg load_camera)"/>
    <arg name="use_gpu_laser" value="$(arg use_gpu_laser)"/>
   </include>
