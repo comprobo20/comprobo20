@@ -6,9 +6,6 @@
       <uri>model://sun</uri>
     </include>
     <include>
-      <uri>model://mobile_base</uri>
-    </include>
-    <include>
       <uri>model://bod_volcano</uri>
     </include>
     <include>

@@ -18,10 +18,6 @@
       <uri>model://ground_plane</uri>
     </include>
     <include>
-	    <uri>model://mobile_base</uri>
-	    <pose>2 -2.5 2</pose>
-    </include>
-    <include>
 	    <uri>model://dining_hall_obj</uri>
 	    <scale>0.1 0.1 0.1</scale>
     </include>
