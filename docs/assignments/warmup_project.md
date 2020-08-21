@@ -37,7 +37,7 @@ You code should be placed in a ROS package called *warmup_project*. If you want 
 This diagram should help you with the project. It shows the angles for the laser range data coming from the Neato and how it maps onto the Neato's physical layout.
 
 <p align="center">
-<img alt="A Diagram of the Neato's Lidar" src="/website_graphics/lidar.png"/>
+<img alt="A Diagram of the Neato's Lidar" src="../website_graphics/lidar.png"/>
 </p>
 
 The LaserScan message consists of a number of attributes:
@@ -185,7 +185,7 @@ For this behavior your goal will be to pilot the Neato near a wall (e.g. using t
 To get started let's draw a simple picture of the situation.
 
 <p align="center">
-<img alt="A Neato aligning to a wall.  Shown are two LIDAR measurements and the relevant angles" src="/website_graphics/wallfollow.png"/>
+<img alt="A Neato aligning to a wall.  Shown are two LIDAR measurements and the relevant angles" src="../website_graphics/wallfollow.png"/>
 </p>
 
 Building upon this simple picture, fill out what you can measure from your robot's sensors. What is the "goal" of your controller?
@@ -193,7 +193,7 @@ Building upon this simple picture, fill out what you can measure from your robot
 #### Hints
 
 * Draw lots of pictures. Make sure you understand the geometry of the problem. 
-* A fairly straightforward way to attack the problem is by using proportional control. If you want to do something more sophisticated you may want to look into PID control (see going beyond section). * Sometimes various laser range measurements might not be present on every scan. In the diagram above I selected two specific laser measurements to make the problem easier, however, you should not limit yourself to just using these measurements. You will probably want to make your code robust by using multiple measurements (for redundancy).
+* A fairly straightforward way to attack the problem is by using [proportional control](http://en.wikipedia.org/wiki/Proportional_control). If you want to do something more sophisticated you may want to look into PID control (see going beyond section). * Sometimes various laser range measurements might not be present on every scan. In the diagram above I selected two specific laser measurements to make the problem easier, however, you should not limit yourself to just using these measurements. You will probably want to make your code robust by using multiple measurements (for redundancy).
 
 #### Going beyond (some suggestions, but feel free to be creative)
 
@@ -222,7 +222,7 @@ Pretend your Neato is your robot pet and get it to follow you around! The intend
 * As in wall following, you may find proportional control to be a useful strategy. 
 * There are many ways to figure out where the person is. A simple approach is to calculate the center of mass of the laser measurements that fall within a prescribed box relative to the robot. This diagram should help clear things up:
 <p align="center">
-<img alt="A schematic Neato following a person." src="/website_graphics/persontracking.png"/>
+<img alt="A schematic Neato following a person." src="../website_graphics/persontracking.png"/>
 </p>
 
 #### Going Beyond
@@ -245,7 +245,7 @@ For this part you should program the Neato to move forward while reactively avoi
 A more advanced approach to the problem is to use the concept of potential fields (see [this tutorial](http://phoenix.goucher.edu/~jillz/cs325_robotics/goodrich_potential_fields.pdf), or [the original paper](http://ijr.sagepub.com/content/5/1/90.short)). Think of a force constantly pulling the robot forward while nearby obstacles (as detected by the laser range finder) exert repellant forces on the robot. The magnitude of the repellant force should increase as the robot gets closer to the obstacle.
 
 <p align="center">
-<img alt="A Neato in a potential field for robot motion planing." src="/website_graphics/obstacleavoidance.png"/>
+<img alt="A Neato in a potential field for robot motion planing." src="../website_graphics/obstacleavoidance.png"/>
 </p>
 
 
@@ -271,7 +271,7 @@ For this part of the assignment you have two choices:
 2. Implement a new behavior using finite state control
 
 <p align="center">
-<img alt="A finite state diagram of a two behavior system." src="/website_graphics/fsc.png"/>
+<img alt="A finite state diagram of a two behavior system." src="../website_graphics/fsc.png"/>
 </p>
 
 You may find that drawing a state transition diagram is helpful. Each state should indicate either a different behavior or a different stage with a single behavior. Each transition should be some condition that you can reliably detect in the environment. For instance, I might combine wall following with person tracking in the following way:
