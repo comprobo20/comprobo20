@@ -1,6 +1,5 @@
 ---
 title: "Warmup Project"
-toc_sticky: true
 toc_h_max: 3
 ---
 
