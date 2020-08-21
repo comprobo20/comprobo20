@@ -91,6 +91,10 @@ float64 accelZInG
 
 The acceleration along each axis is in units of "gravities on planet earth" (so the robot should read 1.0 in the z-direction when it is on a flat surface).  Run ``$ rostopic echo /accel`` as you tilt the robot to get a sense for the accelerometer's behavior.
 
+## Robot Simulation
+
+TODO: add this
+
 ## Robot Debugging Tools
 
 ### RViz
