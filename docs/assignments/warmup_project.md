@@ -107,7 +107,7 @@ Rviz contains visualization tools for common sensory data.  Further, there are 
 For part 1 you will be using rviz to visualize the data from the Neatos. Grab a Neato and connect to it. Read through the documentation for rviz and perform the following steps:
 
 1. Set the base_frame to "odom"
-2. Add a visualization of the Neato's stabilized laser scan (topic /stable_scan) (make sure to adjust the size of the markers so you can see them easily)
+2. Add a visualization of the Neato's stabilized laser scan (topic /scan).  This is most easily found by using the "By topic" tab.  Make sure to adjust the size of the markers so you can see them easily).
 3. Add a visualization of the Neato itself (this can be done by selecting "Robot Model" from the insert menu")
 4. Add a visualization of the Neato's camera feed (topic camera/image_raw) (TODO: only applies if started with load_camera:=true)
 
