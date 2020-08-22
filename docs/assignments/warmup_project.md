@@ -1,9 +1,14 @@
 ---
 title: "Warmup Project"
+toc_sticky: true
 toc_h_max: 3
 ---
 
-## Learning Goals
+## Project Overview
+
+Your goal in this project will be to program the Neato to execute a number of behaviors.  In the process of implementing these behaviors, you will also learn about tools and strategies for debugging robot programs.  You are encouraged to be as creative as possible in this assignment. If you want to substitute another behavior for one of the following, just let me know! For each of these behaviors, there is a straightforward way to implement the behavior and a more sophisticated way. See the going beyond section for some more information on these more sophisticated approaches. You should be spending about fifteen hours on this assignment, so if you find yourself breezing through the required portions, we recommend that you push yourself a bit further! The flip side is that if you find that you are stuck or having a difficult time making progress, please send me an e-mail so we can chat about what you are finding difficult.
+
+### Learning Goals
 
 * Gain familiarity with ROS (become a ROS boss) 
 * Brush up on Python
@@ -12,87 +17,59 @@ toc_h_max: 3
 * Learn to program robot behaviors using reactive control strategies 
 * Learn about finite-state robot control
 
-## Project Showcase
+### Project Showcase
 
 If you want to show off something you did, add it to [this shared Google Slides presentation](https://docs.google.com/presentation/d/1zzH9M_wSm1ftLnQ8QTqLexShPNP53qnhGYGBRByu3pM/edit?usp=sharing).
 
-## Project Overview
+### Logistics
 
-You may work on this assignment with one other person from the class.  You will be turning in your project (both code + writeup) via Github. To help uss track your assignment, please fork [this repo as a starting point](https://github.com/comprobo20/warmup_project) for your project.   Even if you are working alone, make sure to let us know where your Github repository for this project lives using [this Google sheet](https://docs.google.com/spreadsheets/d/1LMsM67Wx9Ebv8KrBNRlx02XLvbyZUwTtmz1Bdlk3kMI/edit?usp=sharing).
+You may work on this assignment with one other person from the class.  You will be turning in your project (both code + writeup) via Github. To help us track your assignment, please fork [this repo as a starting point](https://github.com/comprobo20/warmup_project) for your project.   Even if you are working alone, make sure to let us know where your Github repository for this project lives using [this Google sheet](https://docs.google.com/spreadsheets/d/1LMsM67Wx9Ebv8KrBNRlx02XLvbyZUwTtmz1Bdlk3kMI/edit?usp=sharing).
 
 We have included several extensions to the basic project that we hope will keep students that are coming in with more background knowledge (whether that be robotics knowledge or programming knowledge) engaged.  
 
-Your goal in this project will be to program the Neato to execute a number of behaviors.  In the process of implementing these behaviors, you will also learn about tools and strategies for debugging robot programs.  You are encouraged to be as creative as possible in this assignment. If you want to substitute another behavior for one of the following, just let me know! For each of these behaviors, there is a straightforward way to implement the behavior and a more sophisticated way. See the going beyond section for some more information on these more sophisticated approaches. You should be spending about fifteen hours on this assignment, so if you find yourself breezing through the required portions I recommend that you push yourself a bit further! The flip side is that if you find that you are stuck or having a difficult time making progress, please send me an e-mail so we can chat about what you are finding difficult.
+You will likely find the [resources page](../useful_resources) useful for completing this assignment.
 
-You will likely find the [TODO: resources page](TODO CREATE) useful for completing this assignment.
+### Code Structure
 
-## Code Structure
+Your code should be placed in a ROS package called *warmup_project*. If you want to structure your code with more than one package, make sure to document the additional packages in your project writeup.  If you are unsure how to create a ROS package, [consult the ROS tutorial on creating a catkin package](http://wiki.ros.org/ROS/Tutorials/CreatingPackage).
 
-You code should be placed in a ROS package called *warmup_project*. If you want to structure your code with more than one package, make sure to document the additional packages in your project writeup.  If you are unsure how to create a ROS package, [consult the ROS tutorial on creating a catkin package](http://wiki.ros.org/ROS/Tutorials/CreatingPackage).
-
-## Sensors
-
-### Lidar
-
-This diagram should help you with the project. It shows the angles for the laser range data coming from the Neato and how it maps onto the Neato's physical layout.
-
-<p align="center">
-<img alt="A Diagram of the Neato's Lidar" src="../website_graphics/lidar.png"/>
-</p>
-
-The LaserScan message consists of a number of attributes:
+Here are the files you will likely generate as part of this assignment.
 
 ```bash
-$ rosmsg show sensor_msgs/LaserScan
-std_msgs/Header header
-  uint32 seq
-  time stamp
-  string frame_id
-float32 angle_min
-float32 angle_max
-float32 angle_increment
-float32 time_increment
-float32 scan_time
-float32 range_min
-float32 range_max
-float32[] ranges
-float32[] intensities
+warmup_project/bags/drive_square_demo.bag
+warmup_project/bags/finite_state_controller_demo.bag
+warmup_project/bags/obstacle_avoider_demo.bag
+warmup_project/bags/person_follower_demo.bag
+warmup_project/bags/test_drive.bag
+warmup_project/bags/wall_follower_demo.bag
+warmup_project/scripts/teleop.py
+warmup_project/scripts/drive_square.py
+warmup_project/scripts/obstacle_avoider.py
+warmup_project/scripts/finite_state_controller.py
+warmup_project/scripts/person_follower.py
+warmup_project/scripts/wall_follower.py
+warmup_project/writeup.pdf
 ```
 
-Most of these attributes you can ignore for the purposes of this assignment. The one that you will really need to dig into is ranges. The ranges attribute provides 361 numbers where each number corresponds to the distance to the closest obstacle as detected by the laser scan at various angles relative to the robot. Each measurement is spaced exactly 1 degree apart. The first measurement corresponds to 0 degrees in the image of the Neato above. As the degrees in the image go up, so to does the index in the ranges array. Where does 361 come from? The last measurement (index 360) is the same as the first (index 0). Why do we do this craziness?!? We have to do this to adhere to some ROS conventions around LaserScan data that will be important later in the class. For now, you can safely ignore the last measurement (index 360).
+### Writeup
 
-### Bump sensors
+TODO: fix the framing of the writeup.  Some students turn in amazing ones and others turn in ones that are afterthoughts.   More consistency (or an example of what a good one is) would be amazing.
 
-TODO: these arer outdated in the simulator (all or nothing)
+In your ROS package create a file to hold your project writeup. Any format is fine (markdown, word, pdf, etc.). Your writeup should answer the following questions.  We expect this writeup to be done in such a way that you are proud to include it as part of your professional portfolio.  As such, please make sure to write the report so that it is understandable to an external audience.  Consider adding pictures to your report, or links to youtube videos of your robot programs in action.  You have no idea how persuasive a project like this can be to a perspective employer!
 
-The Neato publishes the state of the bump sensors approximately 10 times per second on a topic called /bump.  The type of this message is neato_node/Bump.
+* For each behavior, describe the problem at a high-level.  Include any relevant diagrams that help explain your approach.  Discuss your strategy at a high-level and include any tricky decisions that had to be made to realize a successful implementation.
+* For the finite state controller, what was the overall behavior.  What were the states? What did the robot do in each state? How did you combine and how did you detect when to transition between behaviors?  Consider including a state transition diagram in your writeup.
+* How was your code structured?  Make sure to include a sufficient detail about the object-oriented structure you used for your project.
+* What if any challenges did you face along the way? 
+* What would you do to improve your project if you had more time? 
+* What are the key takeaways from this assignment for future robotic programming projects?
 
-```bash
-$ rosmsg show neato_node/Bump
-uint8 leftFront
-uint8 leftSide
-uint8 rightFront
-uint8 rightSide
-```
-
-How these bump sensors map to the physical layout of the Neato should be pretty self-explanatory.  Rrun the command ``$ rostopic echo /bump`` and press the bumper of a Neato to get a sense of where the bump sensors are located.
-
-### Accelerometer
-
-The Neato publishes data from it's onboard accelerometer at 10 Hz.  The topic it publishes on is /accel, and the message format is as follows.
-
-```bash
-$ rosmsg show neato_node/Accel 
-float64 accelXInG
-float64 accelYInG
-float64 accelZInG
-```
-
-The acceleration along each axis is in units of "gravities on planet earth" (so the robot should read 1.0 in the z-direction when it is on a flat surface).  Run ``$ rostopic echo /accel`` as you tilt the robot to get a sense for the accelerometer's behavior.
 
 ## Robot Simulation
 
-TODO: add this
+We will be using the Gazebo simulator for much of this course.  For the warmup project we will be using a simulation of a robotic vacuum cleaner from Neato Robotics.
+
+The documentation on how to run the simulator, as well as the various topics (e.g., for accessing sensor data or sending motor commands), are documented on our [How to Run the Simulator page](../How to/run_the_neato_simulator).
 
 ## Robot Debugging Tools
 
@@ -109,7 +86,7 @@ For part 1 you will be using rviz to visualize the data from the Neatos. Grab a 
 1. Set the base_frame to "odom"
 2. Add a visualization of the Neato's stabilized laser scan (topic /scan).  This is most easily found by using the "By topic" tab.  Make sure to adjust the size of the markers so you can see them easily).
 3. Add a visualization of the Neato itself (this can be done by selecting "Robot Model" from the insert menu")
-4. Add a visualization of the Neato's camera feed (topic camera/image_raw) (TODO: only applies if started with load_camera:=true)
+4. If you start the simulator with the ``load_camera:=true`` option, you can add a visualization of the Neato's camera feed (topic camera/image_raw).
 
 Save your rviz configuration so you can use it later (you can simply make it the default configuration by overwriting default.rviz or save it as a different file if you want to maintain the current default rviz behavior).
 
@@ -125,13 +102,13 @@ You do not have to turn in anything for this part.
 
 Rosbag is a very useful tool for debugging robot programs.  The basic idea is to record all of the data from a particular run of the robot (laser scans, bump sensors, images, etc.), and then use this recording to help test and debug your code.  For instance, suppose you are writing code to estimate the positions of walls in an environment.  Given a recording of your robot moving around in an environment, you can iterate on your wall detection system until it works on this recorded test case without ever having to go back and interface with the physical robot!  These recorded test cases are thus very useful for increasing the time efficiency and also the repeatability of your debugging process.
 
-[Create a bag file](http://wiki.ros.org/rosbag/Tutorials/Recording%20and%20playing%20back%20data) of you driving the Neato around.  You can do this by using the ``rosbag record`` command.  Be careful not to record the ``/camera/image_raw`` topic (this topic is an uncompressed image which is surprisingly large). In order to avoid recording the this topic you can use the following command, which excludes any topic that ends with the string "image_raw".
+[Create a bag file](http://wiki.ros.org/rosbag/Tutorials/Recording%20and%20playing%20back%20data) of you driving the Neato around.  You can do this by using the ``rosbag record`` command.  If you started the simulator with the ``load_camera:=true`` command, Be careful not to record the ``/camera/image_raw`` topic (this topic is an uncompressed image which is surprisingly large). In order to avoid recording the this topic you can use the following command, which excludes any topic that ends with the string "image_raw".
 
 ```bash
 $ rosbag record -a -x ".*image_raw$" -o bag-file-name
 ```
 
-Where **bag-file-name** is where you'd like to store the recorded messages.  Alternatively, you can use bring_minimal.launch instead of bringup.launch when connecting to the robot to avoid capturing any images at all. TODO: update for simulator (turn camera off)
+Where **bag-file-name** is where you'd like to store the recorded messages.  Alternatively, if you started the simulator without specifying ``load_camera:=true``, then you don't have to worry about this problem (since there are no images being published).
 
 Once you have recorded your bag file, play it back and visualize the results in rviz. Make sure to disconnect from the robot before playing back your bag file!  Be very careful about the system clock when using rosbag. You want ROS to use the time stamps as they were recorded in the bag file, so be sure to specify the --clock argument when playing back your bagfile. Also, you may need to restart rviz to ensure it uses the clock from the bag file as opposed to the system time.
 
@@ -193,7 +170,8 @@ Building upon this simple picture, fill out what you can measure from your robot
 #### Hints
 
 * Draw lots of pictures. Make sure you understand the geometry of the problem. 
-* A fairly straightforward way to attack the problem is by using [proportional control](http://en.wikipedia.org/wiki/Proportional_control). If you want to do something more sophisticated you may want to look into PID control (see going beyond section). * Sometimes various laser range measurements might not be present on every scan. In the diagram above I selected two specific laser measurements to make the problem easier, however, you should not limit yourself to just using these measurements. You will probably want to make your code robust by using multiple measurements (for redundancy).
+* A fairly straightforward way to attack the problem is by using [proportional control](http://en.wikipedia.org/wiki/Proportional_control). If you want to do something more sophisticated you may want to look into PID control (see going beyond section).
+* Sometimes various laser range measurements might not be present on every scan. In the diagram above we selected two specific laser measurements to make the problem easier, however, you should not limit yourself to just using these measurements. You will probably want to make your code robust by using multiple measurements (for redundancy).
 
 #### Going beyond (some suggestions, but feel free to be creative)
 
@@ -257,7 +235,7 @@ By summing the forces you can obtain a direction of motion for the robot (note: 
 
 #### Visualization
 
-While not required, I recommend that you choose a visualization strategy that helps you as much as possible.  Suggestions are to visualize the goal location using a circle, and to visualize the repulsive and attractive potentials using arrows (where the length of the arrow indicates the magnitude of the influence).
+While not required, we recommend that you choose a visualization strategy that helps you as much as possible.  Suggestions are to visualize the goal location using a circle, and to visualize the repulsive and attractive potentials using arrows (where the length of the arrow indicates the magnitude of the influence).
 
 #### Recording
 
@@ -274,7 +252,7 @@ For this part of the assignment you have two choices:
 <img alt="A finite state diagram of a two behavior system." src="../website_graphics/fsc.png"/>
 </p>
 
-You may find that drawing a state transition diagram is helpful. Each state should indicate either a different behavior or a different stage with a single behavior. Each transition should be some condition that you can reliably detect in the environment. For instance, I might combine wall following with person tracking in the following way:
+You may find that drawing a state transition diagram is helpful. Each state should indicate either a different behavior or a different stage with a single behavior. Each transition should be some condition that you can reliably detect in the environment. For instance, we might combine wall following with person tracking in the following way:
 
 #### Visualization
 
@@ -283,39 +261,6 @@ While not required, we recommend that you choose a visualization strategy that h
 #### Recording
 
 Using the rosbag instructions from earlier, record a demo of your finite-state controller in action.  Push your bag file to your repo in the ``bags`` subdirectory (again, use a suitable name so that we can tell which behavior it corresponds to).
-
-## Turning in your Work
-
-Code your code should be pushed to your Github repository. All code should be placed within a ROS package called ``warmup_project``.
-
-TODO: fix the framing of the writeup.  Some students turn in amazing ones and others turn in ones that are afterthoughts.   More consistency (or an example of what a good one is) would be amazing.
-
-In your ROS package create a file to hold your project writeup. Any format is fine (markdown, word, pdf, etc.). Your writeup should answer the following questions.  I expect this writeup to be done in such a way that you are proud to include it as part of your professional portfolio.  As such, please make sure to write the report so that it is understandable to an external audience.  Consider adding pictures to your report, or links to youtube videos of your robot programs in action.  You have no idea how persuasive a project like this can be to a perspective employer!
-
-* For each behavior, describe the problem at a high-level.  Include any relevant diagrams that help explain your approach.  Discuss your strategy at a high-level and include any tricky decisions that had to be made to realize a successful implementation.
-* For the finite state controller, what was the overall behavior.  What were the states? What did the robot do in each state? How did you combine and how did you detect when to transition between behaviors?  Consider including a state transition diagram in your writeup.
-* How was your code structured?  Make sure to include a sufficient detail about the object-oriented structure you used for your project.
-* What if any challenges did you face along the way? 
-* What would you do to improve your project if you had more time? 
-* What are the key takeaways from this assignment for future robotic programming projects?
-
-For concreteness, here are the files you will likely generate as part of this assignment:
-
-```bash
-warmup_project/bags/drive_square_demo.bag
-warmup_project/bags/finite_state_controller_demo.bag
-warmup_project/bags/obstacle_avoider_demo.bag
-warmup_project/bags/person_follower_demo.bag
-warmup_project/bags/test_drive.bag
-warmup_project/bags/wall_follower_demo.bag
-warmup_project/scripts/teleop.py
-warmup_project/scripts/drive_square.py
-warmup_project/scripts/obstacle_avoider.py
-warmup_project/scripts/finite_state_controller.py
-warmup_project/scripts/person_follower.py
-warmup_project/scripts/wall_follower.py
-warmup_project/writeup.pdf
-```
 
 ## Intermediate checkpoint
 
@@ -330,16 +275,4 @@ Halfway through the project you should have the following parts of the project d
 
 ## Tips and Tricks
 
-We want to create an environment in this course where folks contribute interesting things they've learned to the rest of the class.  To accomplish this, we've created [a Google doc that we can use for collceting useful tips for this assignment](https://docs.google.com/document/d/1qKx8a1RNRpeyYIiZdDyUJzNqXsaaCSz8rG0UKaqvYIo/edit?usp=sharing).  We've already prepopulated the document with useful information on calculating angle differences and converting poses to x, y, and yaw.
-
-### Extracting x, y, yaw from a Pose
-
-See our [tips and tricks Google doc](https://docs.google.com/document/d/1qKx8a1RNRpeyYIiZdDyUJzNqXsaaCSz8rG0UKaqvYIo/edit?usp=sharing).
-
-### Angle Differences
-
-See our [tips and tricks Google doc](https://docs.google.com/document/d/1qKx8a1RNRpeyYIiZdDyUJzNqXsaaCSz8rG0UKaqvYIo/edit?usp=sharing).
-
-### Projecting Laser Scan into Odometry Frame
-
-See our [tips and tricks Google doc](https://docs.google.com/document/d/1qKx8a1RNRpeyYIiZdDyUJzNqXsaaCSz8rG0UKaqvYIo/edit?usp=sharing).
+We want to create an environment in this course where folks contribute interesting things they've learned to the rest of the class.  To accomplish this, we've created [a Google doc that we can use for collceting useful tips for this assignment](https://docs.google.com/document/d/1qKx8a1RNRpeyYIiZdDyUJzNqXsaaCSz8rG0UKaqvYIo/edit?usp=sharing).  We've already prepopulated the document with useful information on calculating angle differences; converting a ROS pose to x, y, and yaw; and project a laser scan into the odometry frame.

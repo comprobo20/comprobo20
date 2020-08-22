@@ -175,10 +175,7 @@ This is a topic provided by ROS.  See the [ROS docs on ``rosout``](http://wiki.r
 
 ### ``scan``
 
-These are the measurements of the Neato's LIDAR.  The warmup project has a good explanation of this (quoted below for your convenience).
-
- 
-This diagram should help you with the project. It shows the angles for the laser range data coming from the Neato and how it maps onto the Neato's physical layout.
+These are the measurements of the Neato's LIDAR.  This diagram should help you with the project. It shows the angles for the laser range data coming from the Neato and how it maps onto the Neato's physical layout.
 
 <p align="center">
 <img alt="A Diagram of the Neato's Lidar" src="../website_graphics/lidar.png"/>
