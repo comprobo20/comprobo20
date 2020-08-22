@@ -69,7 +69,11 @@ In your ROS package create a file to hold your project writeup. Any format is fi
 
 We will be using the Gazebo simulator for much of this course.  For the warmup project we will be using a simulation of a robotic vacuum cleaner from Neato Robotics.
 
-The documentation on how to run the simulator, as well as the various topics (e.g., for accessing sensor data or sending motor commands), are documented on our [How to Run the Simulator page](../How to/run_the_neato_simulator).
+<p align="center">
+<img alt="screenshot of a Neato in an empty simulated environment" src="../website_graphics/neato_gazebo.png"/>
+</p>
+
+The documentation on how to run the simulator, as well as the various topics (e.g., for accessing sensor data or sending motor commands), are documented on our [how to run the simulator page](../How to/run_the_neato_simulator).
 
 ## Robot Debugging Tools
 
