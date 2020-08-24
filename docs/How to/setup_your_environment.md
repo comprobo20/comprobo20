@@ -13,11 +13,12 @@ The teaching team will be using ROS Noetic with Ubuntu 20.04, but you should be 
 In order to setup your computer for dual boot, you need to create a bootable USB thumb drive with Ubuntu 20.04 on it.  Itzgeek has [a nice walkthrough of how to do this](https://www.itzgeek.com/post/how-to-install-ubuntu-20-04-alongside-with-windows-10-in-dual-boot/) that will allow you to take an existing USB thumb drive and convert it into a bootable installer.
 
 A few quick notes:
-* We recommend following the instructions under "Create a bootable USB disk".
-* When installing Ubuntu you will likely need to **shrink your Windows patition** to make room for Ubuntu.  The instructions linked above show how you can use the Disk Management utility in Windows to accomplish this.  Unfortunately, sometimes you will not be able to shrink your volume in this way.  If this happens to you, we recommend using the Ubuntu installer to shrink your Windows partition.  If you continue to have issues, send us an e-mail (see below).
+* If you have Ubuntu 18.04, you can upgrade it 20.04 using [these instructions](https://ubuntu.com/blog/how-to-upgrade-from-ubuntu-18-04-lts-to-20-04-lts-today).
+* When going through the Itzgeek tutorial, we recommend following the instructions under "Create a bootable USB disk".
+* When installing Ubuntu you will likely need to **shrink your Windows patition** to make room for Ubuntu.  The Itzgeek instructions show how you can use the Disk Management utility in Windows to accomplish this.  Unfortunately, sometimes you will not be able to shrink your volume in this way.  If this happens to you, we recommend using the Ubuntu installer to shrink your Windows partition.  If you continue to have issues, send us an e-mail (see below).
 * You should probably reserve about 50 GB of space for Ubuntu.
 * When installing Ubuntu, you should select the options to **Download updates** and **Install third-party software**.
-* If you run into any issues with this, send an e-mail to <a href="mailto:paul.ruvolo@olin.edu">Paul Ruvolo</a> and <a href="mailto:mmalley@olin.edu>">Melinda Malley</a>.
+* If you run into any issues with this, send an e-mail to <a href="mailto:mmalley@olin.edu>">Melinda Malley</a> and <a href="mailto:paul.ruvolo@olin.edu">Paul Ruvolo</a>.
 
 
 *Once you have a freshly installed copy of Ubuntu 20.04, perform the following steps.*
