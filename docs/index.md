@@ -34,7 +34,7 @@ feature_row_robot:
     excerpt: "The documentation describes both how to connect to the the physical robot or a simulator and how to build your own customized Neato.
 
     ### Student Facing Documentation\n
-    * [Running the Neato Simulator](How to/run_the_neato_simulator)\n
+    * [Setting up Your Computer](How to/setup_your_environment) and [Running the Neato Simulator](How to/run_the_neato_simulator)\n
     * [Useful Resources](useful_resources) and [Sample Code](Sample_code/sample_code)\n
 
     ### Teaching Team Documentation\n
