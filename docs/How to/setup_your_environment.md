@@ -3,16 +3,24 @@ title: "Setup Your Computing Environment"
 toc_sticky: true
 ---
 
-The teaching team will be using ROS Noetic with Ubuntu 20.04, but you should be able to use 18.04 and Melodic (alternate instructions... TODO create these)
+The teaching team will be using ROS Noetic with Ubuntu 20.04, but you should be able to use 18.04 and Melodic (note: the instructions for 18.04 are not posted yet, but are very similar).
 
-> While there are other ways to install ROS on a computer (ROS for Windows, ROS through Docker, ROS through Windows Subsystem for Linux, ROS2), you really, really want to use Ubuntu running via dualboot (not through a VM).  We have found that while these other setups work to varying degrees, there are always little issues that will crop up that will likely get in the way of your learning.  The biggest issue you will see is that most of these other setups will not allow you to run robot simulators with hardware graphics acceleration.  Given how much we will be using simualtors this semester, you really want the superior performance that comes from hardware acceleration.
+> While there are other ways to install ROS on a computer (ROS for Windows, ROS through Docker, ROS through Windows Subsystem for Linux, ROS2), you really, really want to use Ubuntu running via dual boot (not as a virtual machine).  We have found that while these other setups work to varying degrees, there are always little issues that will crop up that will likely get in the way of your learning.  The biggest issue you will see is that most of these other setups will not allow you to run robot simulators with hardware-based graphics acceleration.  Given how much we will be using simulators this semester, you really want the superior performance that comes from hardware acceleration.
 
 
 ## Setting up a Dual Boot
 
-TODO
+In order to setup your computer for dual boot, you need to create a bootable USB thumb drive with Ubuntu 20.04 on it.  Itzgeek has [a nice walkthrough of how to do this](https://www.itzgeek.com/post/how-to-install-ubuntu-20-04-alongside-with-windows-10-in-dual-boot/) that will allow you to take an existing USB thumb drive and convert it into a bootable installer.
 
-> Once you have a freshly installed copy of Ubuntu 20.04 (update and upgrade), perform the following steps.
+A few quick notes:
+* We recommend following the instructions under "Create a bootable USB disk".
+* When installing Ubuntu you will likely need to **shrink your Windows patition** to make room for Ubuntu.  The instructions linked above show how you can use the Disk Management utility in Windows to accomplish this.  Unfortunately, sometimes you will not be able to shrink your volume in this way.  If this happens to you, we recommend using the Ubuntu installer to shrink your Windows partition.  If you continue to have issues, send us an e-mail (see below).
+* You should probably reserve about 50 GB of space for Ubuntu.
+* When installing Ubuntu, you should select the options to **Download updates** and **Install third-party software**.
+* If you run into any issues with this, send an e-mail to <a href="mailto:paul.ruvolo@olin.edu">Paul Ruvolo</a> and <a href="mailto:mmalley@olin.edu>">Melinda Malley</a>.
+
+
+*Once you have a freshly installed copy of Ubuntu 20.04, perform the following steps.*
 
 ## Install ROS Noetic
 
