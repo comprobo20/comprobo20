@@ -66,6 +66,10 @@ The Olin College course "A Computational Introduction to Robotics" (CompRobo) se
 
 {% include feature_row id="feature_row_warmup_project" type="right" %}
 
+## In-class Activities
+
+* [Day 1](in-class/day01)
+
 ## Conclusion and Learning More
 
 CompRobo serves as a fun, hands-on introduction to key ideas in robotics algorithms and toolsets.  Despite the fact that the course is successful at Olin, we realize that everyone's institutional context is different. To connect with folks at Olin College to learn more about this module or determine how you might build off of this at your own institution, e-mail <a href="mailto:Collaboratory@olin.edu">Collaboratory@olin.edu</a> to start the conversation.
