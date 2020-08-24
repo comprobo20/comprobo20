@@ -279,4 +279,4 @@ Halfway through the project you should have the following parts of the project d
 
 ## Tips and Tricks
 
-We want to create an environment in this course where folks contribute interesting things they've learned to the rest of the class.  To accomplish this, we've created [a Google doc that we can use for collceting useful tips for this assignment](https://docs.google.com/document/d/1qKx8a1RNRpeyYIiZdDyUJzNqXsaaCSz8rG0UKaqvYIo/edit?usp=sharing).  We've already prepopulated the document with useful information on calculating angle differences; converting a ROS pose to x, y, and yaw; and project a laser scan into the odometry frame.
+We want to create an environment in this course where folks contribute interesting things they've learned to the rest of the class.  To accomplish this, we've created [a Google doc that we can use for collecting useful tips for this assignment](https://docs.google.com/document/d/1qKx8a1RNRpeyYIiZdDyUJzNqXsaaCSz8rG0UKaqvYIo/edit?usp=sharing).  We've already prepopulated the document with useful information on calculating angle differences; converting a ROS pose to x, y, and yaw; and project a laser scan into the odometry frame.
