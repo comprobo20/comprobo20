@@ -25,7 +25,7 @@ A few quick notes:
 
 ## Install ROS Noetic
 
-Follow this tutorial (make sure to complete the steps for ``ros-noetic-desktop-full``).
+Follow [this tutorial](http://wiki.ros.org/noetic/Installation) (make sure to complete the steps for ``Ubuntu`` and ``ros-noetic-desktop-full``).
 
 ## Setup your Catkin Workspace
 
