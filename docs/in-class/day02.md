@@ -28,7 +28,7 @@ Next, we'll define ``base_link``, which will serve as our robot-centric coordina
 
 Now that we have defined our new coordinate system, we'd like to be able to take points expressed in this coordinate system and map them to the world coordinate system (and vice-versa).  In order to do this, we need to specify the relationship between these two coordinate systems.  A natural way to specify the relationship between two coordinate systems is to specify the position of the origin of one coordinate system in the other as well as the directions of the coordinate axes of one frame in the other.  Going back to our original example we can say that the coordinate axes of the Neato's base_link coordinate system are at position 3.0m, 5.0m with a rotation of 30 degrees relative to the coordinate axes of the world coordinate frame.  We usually think of this information as defining the transformation from world to base_link.  It turns out that with just this information, we can map vectors between these two coordinate systems.  ROS has robust infrastructure to handle these transformations automatically, so for the most part when writing ROS code, you don't have to worry about how to actually perform these transformations.  However, to build your understanding, we'll dig into this the details a bit.
 
-## From ``base_link to world``
+### From ``base_link to world``
 
 **Exercise:** Determine the coordinates of a point located at (1.0m, 0.0m) in the base_link coordinate system in the world coordinate system.  First draw the point on the board to make sure everyone agrees what its location is.  Once you've determined your answer, how can you tell if you are right?
 
@@ -38,7 +38,7 @@ Now that we have defined our new coordinate system, we'd like to be able to take
 **Exercise:**  Determine the coordinates of a point located at (x, y) in the base_link coordinate system in the world coordinate system.  If you are having trouble operationalizing your answer in terms of equations, you can define it in terms of high-level operations (e.g., translations, rotations, etc.).
 
 
-## From ``world`` to ``base_link``
+### From ``world`` to ``base_link``
 
 There are multiple ways to tackle this one.  I think it's easiest to do algebraically, but you can do it in terms of geometry / trigonometry too.  Don't get too hung up on the mechanics, try to understand conceptually how you would solve the problem.
 
@@ -50,12 +50,19 @@ There are multiple ways to tackle this one.  I think it's easiest to do algebrai
 **Exercise:**  Determine the coordinates of a point located at (x, y) in the world coordinate system in the base_link coordinate system.  If you are having trouble operationalizing your answer in terms of equations, you can define it in terms of high-level operations (e.g., translations, rotations, etc.).
 
 
-## Static Versus Dynamic Coordinate Transformations
+### Static Versus Dynamic Coordinate Transformations
 
 The relationship between some coordinate systems are dynamic (meaning they change over time) and some are static (meaning they are constant over time).
 
 **Exercise:**  Assume that our Neato robot can move about in the world by using its wheels.  Is the relationship between world and base_link static or dynamic?  Given the coordinate systems you came up with earlier, list some examples of coordinate system relationships that are static and some that are dynamic.
 Before Starting
+
+
+## Coding Exercises
+
+> Note: Use the following link to find [sample Solutions for these coding exercises](../Sample_code/day02_solutions).  You can also find this code in your `comprobo20` repository.  If you don't see it, try ``$ git pull upstream``.
+
+### Creating a ROS package
 
 Let's write our code today in a package called in_class_day02 (Note: to avoid merge conflicts, I'll be checking in a sample solution under in_class_day02_solution).  To create the package run the following commands:
 
@@ -64,7 +71,7 @@ $ cd ~/catkin_ws/src/comprobo18
 $ catkin_create_pkg in_class_day02 rospy std_msgs geometry_msgs sensor_msgs
 ```
 
-## Creating ROS Messages in a Python Program (walkthrough in main room)
+### Creating ROS Messages in a Python Program (walkthrough in main room)
 
 ROS messages are represented in Python as objects.  In order to create a ROS message you must call the ``__init__`` method for the ROS message class.  As an example, suppose we want to create a ROS message of type ``geometry_msgs/PointStamped``.  The first thing we need to do is import the Python module that defines the ``PointStamped`` class.  The message type ``geometry_msgs/PointStamped`` indicates that the ``PointStamped`` message type is part of the ``geometry_msgs`` package.  All of the definitions for messages stored in the ``geometry_msgs`` package will be in a sub-package called ``geometry_msgs.msg``.  In order to import the correct class definition into our Python code, we can create a new Python script at ``~/catkin_ws/src/in_class_day02/scripts/test_message.py`` and add the following line to our Python script.
 
@@ -170,7 +177,7 @@ $ rosrun in_class_day02 test_message.py
 How can you be sure whether it is working or not?  Try visualizing the results in rviz.  What steps are needed to make this work?
 
 
-## Callbacks (walkthrough in main room)
+### Callbacks (walkthrough in main room)
 
 [Callback functions](https://en.wikipedia.org/wiki/Callback_(computer_programming)) are a fundamental concept in ROS.  Specifically, they are used to process incoming messages inside a ROS node once we have subscribed to a particular topic.  Let's write some code to listen to the message we created in the previous step.
 
@@ -206,13 +213,13 @@ rospy.spin()
 
 After making your code executable (using ``chmod`` as shown earlier), try running it.  Make sure that the node we created in the first part is also running.
 
-## Making Your Code Object-Oriented
+### Making Your Code Object-Oriented
 
 While what we did in the previous section is a great way to gently introduce ourselves to ROS, I like to minimize the time we will practice the bad habit of not using object-oriented techniques to structure our code.
 
 > Object-oriented programming uses the concept of objects, which are data types that contain attributes as well as methods that operate on those attributes.  As a class, let's see make a list of reasons why object-oriented principles are useful in general and why they might be useful in the context of robots specifically.
 
-## Make Your Nodes Object-Oriented (walkthrough in main room)
+### Make Your Nodes Object-Oriented (walkthrough in main room)
 
 Modify the code you wrote previously (``test_message.py`` and ``receive_message.py``) to be object-oriented.  There's certainly not just one way to map your code into an object-oriented structure, however, the basic principles I follow when doing this are summarized below (if you have a different way you like to do it, that's great, I'd be excited to hear about your design and the reasons you prefer it).
 
@@ -220,8 +227,12 @@ Modify the code you wrote previously (``test_message.py`` and ``receive_message.
 * The attributes of the class should represent the state of the node in question.  For instance, any value you'd like to track over the lifetime of your node can be stored as an attribute.
 * The ``__init__`` method of this node should do the basic setup of the node itself (including calling ``rospy.init_node``) , creating any publishers and subscribers, and initializing any attributes.
 * Callback functions should be methods of your class.  You can refer to them when setting up a Subscriber object using ``self.my_callback`` function.
-* If your node has a run loop (e.g., ``test_message.p``), encapsulate that functionality in a run method of your class.
+* If your node has a run loop (e.g., ``test_message.py``), encapsulate that functionality in a run method of your class.
+
+### Viewing the Results in RViz
+
+TODO
 
 ## Work time for the Warmup Project
-Th
-ake the rest of class to work on the warmup project.  Remember, you have the option of working with a partner for this project.
+
+Take the rest of class to work on the warmup project.  Remember, you have the option of working with a partner for this project.

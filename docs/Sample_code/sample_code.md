@@ -2,4 +2,6 @@
 title: "Sample Code for CompRobo"
 ---
 
-TODO
+## Solutions for In-Class Activities
+
+* [Day 2 Coding Exercise Solutions](day02_solutions)
