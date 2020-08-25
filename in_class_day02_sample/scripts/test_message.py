@@ -1,10 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from __future__ import print_function
 from geometry_msgs.msg import PointStamped, Point
 from std_msgs.msg import Header
 import rospy
-from time import sleep
 
 class TestMessageNode(object):
     """ This node publishes a message at 2 Hz """
