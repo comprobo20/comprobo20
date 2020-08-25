@@ -89,9 +89,9 @@ Make sure you have installed ``pip3``
 $ sudo apt-get install python3-pip
 ```
 
-Install ``Sckit-Build`` and ``OpenCV``
+Install ``Sckit-Build`` and ``OpenCV`` (we specify 4.2.0.34 to try to match the version that comes with Noetic)
 
 ```bash
 $ pip3 install scikit-build
-$ pip3 install opencv-python
+$ pip3 install opencv-python==4.2.0.34
 ```
