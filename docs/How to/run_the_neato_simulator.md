@@ -5,7 +5,11 @@ toc_sticky: true
 
 ## Purpose of this How-to
 
-This document will help you run the Neato simulator.  Before going through these instructions, make sure that you have already setup your computing environment using this How to (TODO: link).
+This document will help you run the Neato simulator.  Before going through these instructions, make sure that you have already [setup your computing environment](setup_your_environment).
+
+## What is a Simualtor?
+
+TODO
 
 ## The Neato Simulator
 
