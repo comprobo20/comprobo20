@@ -3,7 +3,7 @@ title: "Setup Your Computing Environment"
 toc_sticky: true
 ---
 
-The teaching team will be using ROS Noetic with Ubuntu 20.04, but you should be able to use 18.04 and Melodic (note: the instructions for 18.04 are not posted yet, but are very similar).
+The teaching team will be using ROS Noetic with Ubuntu 20.04, but you should be able to use 18.04 and Melodic.  We will indicate where the instructions would differ if you were using Melodic.
 
 > While there are other ways to install ROS on a computer (ROS for Windows, ROS through Docker, ROS through Windows Subsystem for Linux, ROS2), you really, really want to use Ubuntu running via dual boot (not as a virtual machine).  We have found that while these other setups work to varying degrees, there are always little issues that will crop up that will likely get in the way of your learning.  The biggest issue you will see is that most of these other setups will not allow you to run robot simulators with hardware-based graphics acceleration.  Given how much we will be using simulators this semester, you really want the superior performance that comes from hardware acceleration.
 
@@ -11,6 +11,8 @@ The teaching team will be using ROS Noetic with Ubuntu 20.04, but you should be 
 ## Setting up a Dual Boot
 
 In order to setup your computer for dual boot, you need to create a bootable USB thumb drive with Ubuntu 20.04 on it.  Itzgeek has [a nice walkthrough of how to do this](https://www.itzgeek.com/post/how-to-install-ubuntu-20-04-alongside-with-windows-10-in-dual-boot/) that will allow you to take an existing USB thumb drive and convert it into a bootable installer.
+
+> Although we recommend Noetic, if you are using Melodic, you would want to install Ubuntu 18.04 instead.
 
 A few quick notes:
 * If you have Ubuntu 18.04, you can upgrade it 20.04 using [these instructions](https://ubuntu.com/blog/how-to-upgrade-from-ubuntu-18-04-lts-to-20-04-lts-today).
@@ -26,6 +28,9 @@ A few quick notes:
 ## Install ROS Noetic
 
 Follow [this tutorial](http://wiki.ros.org/noetic/Installation) (make sure to complete the steps for ``Ubuntu`` and ``ros-noetic-desktop-full``).
+
+> If you are installing ROS Melodic, follow [this tutorial](http://wiki.ros.org/melodic/Installation/Ubuntu).
+> Once you are done, complete the instructions at the end of this document under <a href="#melodic-python-3-support">Melodic Python 3 Support</a>. 
 
 ## Setup your Catkin Workspace
 
@@ -60,3 +65,33 @@ $ catkin_make
 ```
 
 If ``catkin_make`` exits with no error messages, then your laptop is ready to use with the simulated Neato!  You may to close your current terminal as we have found that ``sourcing ~/catkin_ws/devel/setup.bash`` again seems to be required for everything to function properly.
+
+## Melodic Python 3 Support
+
+> Note: this is not needed if you are using ROS Noetic
+
+Our goal will be to support both ROS Noetic and ROS Melodic *in Python 3*.  This means that in order to use Melodic, you should be setting your system up to work with Python 3 ROS code (Python 2.7 is the default in Melodic).
+
+### Installing the ROS Client Packages for Python 3
+
+Run the following commands to install the ROS Python client packages for Python 3.
+
+```bash
+$ sudo apt-get install python3-catkin-pkg-modules
+$ sudo apt-get install python3-rospkg-modules
+```
+
+### Installing OpenCV
+
+Make sure you have installed ``pip3``
+
+```bash
+$ sudo apt-get install python3-pip
+```
+
+Install ``Sckit-Build`` and ``OpenCV``
+
+```bash
+$ pip3 install scikit-build
+$ pip3 install opencv-python
+```
