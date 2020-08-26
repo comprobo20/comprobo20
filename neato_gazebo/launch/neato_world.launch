@@ -2,7 +2,7 @@
 <launch>
   <arg name="gui" default="true"/>
   <arg name="load_camera" default="false"/>
-  <arg name="use_gpu_laser" default="false"/>
+  <arg name="use_gpu_laser" default="true"/>
   <arg name="neato_world" default="empty"/>
   <arg name="x" default="0"/>
   <arg name="y" default="0"/>

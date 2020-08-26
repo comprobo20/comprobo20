@@ -2,7 +2,7 @@
 <launch>
   <arg name="gui" default="true"/>
   <arg name="load_camera" default="false"/>
-  <arg name="use_gpu_laser" default="false"/>
+  <arg name="use_gpu_laser" default="true"/>
   
   <include file="$(find neato_gazebo)/launch/neato_world.launch">
    <arg name="neato_world" value="flatland"/>
