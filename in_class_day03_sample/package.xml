@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>in_class_day03</name>
+  <name>in_class_day03_sample</name>
   <version>0.0.0</version>
-  <description>The in_class_day03 package</description>
+  <description>The sample in_class_day03 package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
