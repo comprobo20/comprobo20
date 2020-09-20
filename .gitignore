@@ -1,1 +1,3 @@
 *.pyc
+*/matlab_examples/*.stl
+*/matlab_examples/GazeboStaging/*
