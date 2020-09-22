@@ -16,7 +16,8 @@
 
 import rospy
 import smach
-import smach_ros
+# if you want to try to the smach viewer, consider uncommenting these lines
+# import smach_ros
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int8MultiArray
 from sensor_msgs.msg import LaserScan
@@ -53,8 +54,9 @@ class FiniteStateControllerSmach():
                                    transitions={'rotated for 1 second': 'moving_forward'})
 
         # Create and start the introspection server
-        sis = smach_ros.IntrospectionServer('server_name', sm, '/SM_ROOT')
-        sis.start()
+        # if you want to try smach viewer, consider uncommenting these lines
+        # sis = smach_ros.IntrospectionServer('server_name', sm, '/SM_ROOT')
+        # sis.start()
         # Execute SMACH plan
         outcome = sm.execute()
 
