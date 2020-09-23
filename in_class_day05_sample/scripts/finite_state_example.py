@@ -85,7 +85,6 @@ class FiniteStateController():
 
     def rotating_left(self):
         """ Implements the rotating left state.  The next state to run is returned by the function. """
-        r = rospy.Rate(10)
         m = Twist()
         m.angular.z = self.angular_velocity
         self.vel_pub.publish(m)

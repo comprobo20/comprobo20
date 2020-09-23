@@ -123,7 +123,6 @@ class RotatingLeft(smach.State):
         smach.State.__init__(self, outcomes=['rotated for 1 second'])
 
     def execute(self, user_data):
-        r = rospy.Rate(10)
         m = Twist()
         m.angular.z = self.angular_velocity
         self.vel_pub.publish(m)
