@@ -2,6 +2,21 @@
 <launch>
   <arg name="gui" default="true"/>
   <arg name="neato_world" default="empty"/>
+  <arg name="robot_name" value="mobile_base"/>
+  <arg name="load_camera" default="false"/>
+  <arg name="use_gpu_laser" default="true"/>
+
+  <param name="robot_description"
+        command="$(find xacro)/xacro '$(find neato_description)/urdf/neato_standalone.urdf.xacro' load_camera:=$(arg load_camera) use_gpu_laser:=$(arg use_gpu_laser)"/>
+
+  <node pkg="neato_gazebo" type="simulator_adapter.py" name="simulator_adapter"/>
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="30.0" />
+  </node>
+  <node pkg="topic_tools" type="relay" name="scan_relayer" args="scan stable_scan"/>
+  <node pkg="neato_node" type="scan_to_pc2" name="pc2publisher"/>
+  <node pkg="nodelet" type="nodelet" name="$(arg robot_name)_nodelet_manager" args="manager"/>
+
   <!-- start Gazebo with the specified world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
    <arg name="gui" value="$(arg gui)"/>
