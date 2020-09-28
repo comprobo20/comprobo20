@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-from __future__ import print_function, division
+#!/usr/bin/env python3
 
 import rospy
 import cv2

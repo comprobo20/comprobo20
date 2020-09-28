@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
     This script implements a Kalman filter for the system:
@@ -111,7 +111,7 @@ class SimpleKalmanFilter(object):
             self.graphs[2].set_markersize(20)
             plt.ylim([0, 5])
             plt.legend(('probability density','true position','measured position'))
-        plt.show(False)
+        plt.show(block=False)
         return self.graphs
 
 if __name__ == '__main__':

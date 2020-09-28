@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-from __future__ import print_function, division
+#!/usr/bin/env python3
 
 """ A very simple simulator for a robot in 1d with forward
     and rear facing range sensor """

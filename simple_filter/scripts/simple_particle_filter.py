@@ -1,9 +1,6 @@
-#!/usr/bin/env python
-
-from __future__ import print_function, division
+#!/usr/bin/env python3
 
 """ A ROS Node that implements a 1d particle filter """
-
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,7 +68,6 @@ class SimpleParticleFilter(object):
         subplot = self.fig.add_subplot(2,1,1)
         for w in self.world_model.walls:
             subplot.plot([w,w],[0,1],'b-')
-            subplot.hold(True)
         subplot.set_xlim([min(self.walls)-0.2,max(self.walls)+.2])
         subplot.set_ylim([0,1])
         subplot.scatter([p.position for p in self.pf.particles],
