@@ -35,10 +35,10 @@ class RelativeMotionNode():
 
     @staticmethod
     def homogeneous_transform_to_xy_theta(T):
-        return (T[0,2], T[1,2], np.arctan2(T[1,0], T[0,0]))
+        return T[0,2], T[1,2], np.arctan2(T[1,0], T[0,0])
 
     @staticmethod
-    def transform_to_pose(T):
+    def transform_to_xy_theta(T):
         return (T.translation.x,
                 T.translation.y,
                 RelativeMotionNode.yaw_from_transform(T))
@@ -48,7 +48,7 @@ class RelativeMotionNode():
         return euler_from_quaternion((T.rotation.x,
                                       T.rotation.y,
                                       T.rotation.z,
-                                      T.rotation.w))
+                                      T.rotation.w))[2]
 
     @staticmethod
     def transform_to_xy_theta(T):
@@ -68,7 +68,6 @@ class RelativeMotionNode():
                         self.tf_buffer.lookup_transform('odom',
                                                         'base_link',
                                                         self.last_transform_update_time).transform
-                    yaw = RelativeMotionNode.yaw_from_transform(current_transform)
                     self.current_pose = RelativeMotionNode.transform_to_xy_theta(current_transform)
                     if prev_pose is not None:
                         # this way shows the math, but you can do it more easily with tf2_ros (we will show that too)
@@ -82,9 +81,9 @@ class RelativeMotionNode():
                                                                               self.last_transform_update_time,
                                                                               'odom').transform
                         motion_way_1 = RelativeMotionNode.homogeneous_transform_to_xy_theta(current_pose_to_prev_pose)
-                        print(motion_way_1)
-                        motion_way_2 = RelativeMotionNode.transform_to_pose(full_transform)
-                        print(motion_way_2)
+                        print("method 1", motion_way_1)
+                        motion_way_2 = RelativeMotionNode.transform_to_xy_theta(full_transform)
+                        print("methdo 2", motion_way_2)
             except Exception as ex:
                 print(ex)
                 pass
