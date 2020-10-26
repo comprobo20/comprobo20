@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-""" This is a script that walks through some of the basics of working with images
-    with opencv in ROS. """
+""" This is a script that walks through some of the basics of working with
+    images with opencv in ROS. """
 
 import rospy
 from sensor_msgs.msg import Image
@@ -37,7 +37,7 @@ class BallTracker(object):
         r = rospy.Rate(5)
         while not rospy.is_shutdown():
             if not self.cv_image is None:
-                print self.cv_image.shape
+                print(self.cv_image.shape)
                 cv2.imshow('video_window', self.cv_image)
                 cv2.waitKey(5)
 
