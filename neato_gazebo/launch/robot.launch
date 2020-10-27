@@ -2,7 +2,7 @@
   Spawns Neato inside a Gazebo simulation
   -->
 <launch>
-  <arg name="robot_name" value="mobile_base"/>
+  <arg name="robot_name" default="mobile_base"/>
   <arg name="load_camera" default="false"/>
   <arg name="use_gpu_laser" default="true"/>
   <arg name="x" default="0"/>

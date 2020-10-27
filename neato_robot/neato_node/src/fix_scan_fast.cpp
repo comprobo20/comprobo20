@@ -96,9 +96,9 @@ int main(int argc, char** argv){
   listener_ = new tf::TransformListener();
   projector_ = new laser_geometry::LaserProjection();
   ros::NodeHandle node;
-  ros::Subscriber sub = node.subscribe("/scan",10,scanCallback);
-  pub = node.advertise<sensor_msgs::LaserScan>("/stable_scan",10);
-  pub_cloud = node.advertise<sensor_msgs::PointCloud2>("/projected_stable_scan",10);
+  ros::Subscriber sub = node.subscribe("scan",10,scanCallback);
+  pub = node.advertise<sensor_msgs::LaserScan>("stable_scan",10);
+  pub_cloud = node.advertise<sensor_msgs::PointCloud2>("projected_stable_scan",10);
 
   ros::Rate rate(10.0);
   while (node.ok()){

@@ -19,10 +19,10 @@ class RawVelRelayNode(object):
         rospy.Subscriber('raw_vel', Float32MultiArray, self.raw_vel_received)
         rospy.Subscriber('joint_states', JointState, self.joint_states_received)
         rospy.Subscriber('bumper', ContactsState, self.contacts_received)
-        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        self.accel_pub = rospy.Publisher('/accel', Float32MultiArray, queue_size=10)
-        self.encoders_pub = rospy.Publisher('/encoders', Float32MultiArray, queue_size=10)
-        self.bumper_pub = rospy.Publisher('/bump', Int8MultiArray, queue_size=10)
+        self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+        self.accel_pub = rospy.Publisher('accel', Float32MultiArray, queue_size=10)
+        self.encoders_pub = rospy.Publisher('encoders', Float32MultiArray, queue_size=10)
+        self.bumper_pub = rospy.Publisher('bump', Int8MultiArray, queue_size=10)
 
     def raw_vel_received(self, msg):
         print(msg.data)
