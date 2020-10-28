@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-""" A demo that shows how keypoint matches work using SIFT """
+""" A demo that shows how keypoint matches work using ORB """
 
 import cv2
 import pickle
@@ -24,7 +24,7 @@ class KeyPointMatcherDemo(object):
         self.ratio_threshold = 1.0
 
     def compute_matches(self):
-        """ reads in two image files and computes possible matches between them using SIFT """
+        """ reads in two image files and computes possible matches between them using ORB """
         im1 = cv2.imread(self.im1_file)
         im2 = cv2.imread(self.im2_file)
 

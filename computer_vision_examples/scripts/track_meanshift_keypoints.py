@@ -17,7 +17,7 @@ class ObjectTracker(object):
     """ Object Tracker shows the basics of tracking an object based on
         keypoints
     """
-    def __init__(self, descriptor_name):
+    def __init__(self):
         self.keypoint_algorithm = cv2.ORB_create()
 
         self.matcher = cv2.BFMatcher()
@@ -143,8 +143,7 @@ def mouse_event(event,x,y,flag,im):
             tracker.get_query_keypoints()
 
 if __name__ == '__main__':
-    # descriptor can be: SIFT, SURF, BRIEF, BRISK, ORB, FREAK
-    tracker = ObjectTracker('SIFT')
+    tracker = ObjectTracker()
 
     cap = cv2.VideoCapture(0)
 
