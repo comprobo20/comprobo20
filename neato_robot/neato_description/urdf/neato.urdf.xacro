@@ -267,7 +267,6 @@
     <box size="${camera_link} ${camera_link} ${camera_link}"/>
       </geometry>
     </collision>
-
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -282,6 +281,24 @@
       <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
     </inertial>
   </link>
+      <link name='light_cylinder'>
+        <collision name='collision'>
+          <geometry>
+		  <cylinder radius="0.05" length="0.1"/>
+          </geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+		  <cylinder radius="0.05" length="0.1"/>
+          </geometry>
+        </visual>
+      </link>
+  <joint name="camera_to_light" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="-0.1 0 0.25" rpy="0 0 0"/>
+    <parent link="camera_link"/>
+    <child link="light_cylinder"/>
+  </joint>
 </xacro:if>
     <xacro:neato_sim/>
     

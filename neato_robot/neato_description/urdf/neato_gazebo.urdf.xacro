@@ -211,7 +211,53 @@
         <distortionT2>0.0</distortionT2>
       </plugin>
     </sensor>
-  </gazebo>
+    </gazebo>
+    <gazebo reference="light_cylinder">
+        <light name='light_source1' type='spot'>
+          <pose frame=''>0.25 0 0.25 0 -0.7854 0</pose>
+          <attenuation>
+            <range>30</range>
+            <linear>0.05</linear>
+          </attenuation>
+          <diffuse>1 0 0 1</diffuse>
+          <specular>1 0 0 1</specular>
+          <spot>
+            <inner_angle>0.3</inner_angle>
+            <outer_angle>0.35</outer_angle>
+            <falloff>1</falloff>
+          </spot>
+          <direction>0 0 -1</direction>
+        </light>
+        <light name='light_source2' type='spot'>
+          <pose frame=''>-0.25 0 0.25 0 0.7854 0</pose>
+          <attenuation>
+            <range>30</range>
+            <linear>0.05</linear>
+          </attenuation>
+          <diffuse>0 1 0 1</diffuse>
+          <specular>0 1 0 1</specular>
+          <spot>
+            <inner_angle>0.3</inner_angle>
+            <outer_angle>0.35</outer_angle>
+            <falloff>1</falloff>
+          </spot>
+          <direction>0 0 -1</direction>
+        </light>
+      <plugin name='light_control' filename='libFlashLightPlugin.so'>
+        <enable>true</enable>
+        <light>
+		<id>light_cylinder/light_source1</id>
+          <duration>0.1</duration>
+          <interval>0.4</interval>
+        </light>
+        <light>
+		<id>light_cylinder/light_source2</id>
+          <duration>0.05</duration>
+          <interval>0.05</interval>
+          <color>0.5 1 0.8</color>
+        </light>
+      </plugin>
+    </gazebo>
 </xacro:if>
   </xacro:macro>
 </robot>
