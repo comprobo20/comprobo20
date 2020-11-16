@@ -228,9 +228,9 @@ class NeatoNode(object):
                             2: front right
                             3: side right
                     """
-                    self.bumpPub.publish(Int8MultiArray(data=bump_sensors))
-            except:
-                print("failed to get bump sensors!")
+                    self.bumpPub.publish(Int8MultiArray(data=[int(x) for x in bump_sensors]))
+            except Exception as ex:
+                print("failed to get bump sensors!", ex)
 
             try:
                 accelerometer = self.robot.getAccel()
