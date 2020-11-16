@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Generic driver for the Neato XV-11 Robot Vacuum
 # Copyright (c) 2010 University at Albany. All right reserved.
@@ -39,7 +39,7 @@ __author__ = "ferguson@cs.albany.edu (Michael Ferguson)"
 import socket
 import time
 import select
-import cPickle as pickle
+import _pickle as pickle
 import struct
 from os import system
 
@@ -153,11 +153,11 @@ class xv11():
             self.port.connect((port,7777))
             if not self.use_udp:
                 self.port_file = self.port.makefile("rb")
-        except socket.error, ex:
-            print ex
+        except socket.error as ex:
+            print(ex)
         read_sockets, write_sockets, exceptional_sockets = select.select([self.port], [self.port], [])
         while self.port not in write_sockets:
-            print "Checking for connection!", len(read_sockets), len(write_sockets)
+            print("Checking for connection!", len(read_sockets), len(write_sockets))
             read_sockets, write_sockets, exceptional_sockets = select.select([self.port], [self.port], [])
             time.sleep(1)
 
@@ -168,7 +168,7 @@ class xv11():
             self.sensor_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
             self.sensor_sock.bind((UDP_IP, UDP_PORT))
             self.sensor_sock.settimeout(.02)
-        print "CONNECTED!"
+        print("CONNECTED!")
 
         #self.port.settimeout(10)
         self.last_cmd = None
@@ -195,30 +195,30 @@ class xv11():
 
     def send_keep_alive(self):
         """ Tell the server that we are still alive... basically a noop packet """
-        self.port.send("keepalive\n")
+        self.port.send("keepalive\n".encode())
 
 
     def setTestMode(self, value):
         """ Turn test mode on/off. """
 
-        self.port.send("testmode " + value + '\n')
-        print "SETTING TEST MODE TO",value
+        self.port.send(("testmode " + value + '\n').encode())
+        print("SETTING TEST MODE TO",value)
 
     def send_protocol_preference(self):
         """ Tell the server whether or not to use UDP for sensor packets """
 
-        self.port.send("protocolpreference " + str(self.use_udp) + '\n')
-        print "SETTING PROTOCOL to udp", self.use_udp
+        self.port.send(("protocolpreference " + str(self.use_udp) + '\n').encode())
+        print("SETTING PROTOCOL to udp", self.use_udp)
 
     def send_keep_alive(self):
         """ Tell the server that we are still alive... basically a noop packet """ 
 
-        self.port.send("keepalive\n")
+        self.port.send("keepalive\n".encode())
 
 
     def setLDS(self, value):
-        print "setldsrotation " + value + '\n'
-        self.port.send("setldsrotation " + value + '\n')
+        print("setldsrotation " + value + '\n')
+        self.port.send(("setldsrotation " + value + '\n').encode())
 
     def requestScan(self):
         """ Ask neato for an array of scan reads. """
@@ -227,22 +227,19 @@ class xv11():
         try:
             if self.use_udp:
                 sensor_packet, _ = self.sensor_sock.recvfrom(65536)
-                self.sensor_dict = pickle.loads(sensor_packet)
+                self.sensor_dict = pickle.loads(sensor_packet,encoding='bytes')
             else:
-                self.sensor_dict = pickle.load(self.port_file)
-            #print 'got a sensor packet'
+                self.sensor_dict = pickle.load(self.port_file,encoding='bytes')
         except socket.timeout:
             self.sensor_dict = {}
-            #print "no packet received... not necessarily a problem"
 
     def getScanRanges(self):
         """ Read values of a scan -- call requestScan first! """
         ranges = list()
         intensities = list()
-        if 'ldsscanranges' not in self.sensor_dict:
-            #print 'missing scan ranges'
+        if b'ldsscanranges' not in self.sensor_dict:
             return ([],[])
-        ranges = struct.unpack('<%sH' % self.sensor_dict['ldsscanranges'][0], self.sensor_dict['ldsscanranges'][1])
+        ranges = struct.unpack('<%sH' % self.sensor_dict[b'ldsscanranges'][0], self.sensor_dict[b'ldsscanranges'][1])
         return ([r/1000.0 for r in ranges], [10.0]*len(ranges))
 
     def resend_last_motor_command(self):
@@ -258,7 +255,7 @@ class xv11():
         #the zero is sent. This effectively causes the robot to stop instantly.
         if (int(l) == 0 and int(r) == 0 and int(s) == 0):
             if not(self.stop_state):
-                self.port.send("setmotor 1 1 1\n")
+                self.port.send("setmotor 1 1 1\n".encode())
                 self.stop_state = True
                 self.last_cmd = (0.0, 0.0, 0.0)
             else:
@@ -267,23 +264,23 @@ class xv11():
         else:
             self.stop_state = False
             self.last_cmd = (l,r,s)
-            self.port.send("setmotor "+str(int(l))+" "+str(int(r))+" "+str(int(s))+"\n")
+            self.port.send(("setmotor "+str(int(l))+" "+str(int(r))+" "+str(int(s))+"\n").encode())
 
     def getMotors(self):
         """ Update values for motors in the self.state dictionary.
             Returns current left, right encoder values. """
-        if 'motors' in self.sensor_dict:
+        if b'motors' in self.sensor_dict:
             self.state["LeftWheel_PositionInMM"],self.state["RightWheel_PositionInMM"] = \
-                    struct.unpack('<2d', self.sensor_dict['motors'])
+                    struct.unpack('<2d', self.sensor_dict[b'motors'])
             return [self.state["LeftWheel_PositionInMM"],self.state["RightWheel_PositionInMM"]]
         return None
 
     def getAccel(self):
         """ Update values for motors in the self.state dictionary.
             Returns current left, right encoder values. """
-        if 'accel' in self.sensor_dict:
+        if b'accel' in self.sensor_dict:
             self.state["PitchInDegrees"], self.state["RollInDegrees"], self.state["XInG"], self.state["YInG"], self.state["ZInG"], self.state["SumInG"] =\
-                struct.unpack('<6f', self.sensor_dict['accel'])
+                struct.unpack('<6f', self.sensor_dict[b'accel'])
             return [self.state["PitchInDegrees"],
                     self.state["RollInDegrees"],
                     self.state["XInG"],
@@ -296,9 +293,9 @@ class xv11():
         """ Update values for digital sensors in the self.state dictionary. """
         #self.port.send("getdigitalsensors\r\n")
         # for now we will let the raspberry pi request the digital sensors by itself
-        if 'digitalsensors' in self.sensor_dict:
+        if b'digitalsensors' in self.sensor_dict:
             self.state['LFRONTBIT'],self.state['LSIDEBIT'],self.state['RFRONTBIT'],self.state['RSIDEBIT'] =\
-                struct.unpack('<4d', self.sensor_dict['digitalsensors'])
+                struct.unpack('<4d', self.sensor_dict[b'digitalsensors'])
 
             return [self.state['LFRONTBIT'],self.state['LSIDEBIT'],self.state['RFRONTBIT'],self.state['RSIDEBIT']]
         return None

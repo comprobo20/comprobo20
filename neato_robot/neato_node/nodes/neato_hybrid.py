@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # 
 #
@@ -151,7 +151,7 @@ class NeatoNode(object):
                     old_ranges = copy(scan.ranges)
 
             if delta_t-0.2 > 0.1:
-                print "Iteration took longer than expected (should be 0.2) ", delta_t
+                print("Iteration took longer than expected (should be 0.2) ", delta_t)
 
             # get motor encoder values
             curr_motor_time = rospy.Time.now()
@@ -208,7 +208,7 @@ class NeatoNode(object):
                     self.odomBroadcaster.sendTransform( (self.x, self.y, 0), (quaternion.x, quaternion.y, quaternion.z, quaternion.w), curr_motor_time, "base_link", "odom" )
                     self.odomPub.publish(odom)
             except Exception as err:
-                print "my error is " + str(err)
+                print("my error is " + str(err))
             with self.cmd_vel_lock:
                 if self.cmd_vel:
                     self.robot.setMotors(self.cmd_vel[0],
@@ -230,7 +230,7 @@ class NeatoNode(object):
                     """
                     self.bumpPub.publish(Int8MultiArray(data=bump_sensors))
             except:
-                print "failed to get bump sensors!"
+                print("failed to get bump sensors!")
 
             try:
                 accelerometer = self.robot.getAccel()
@@ -238,7 +238,7 @@ class NeatoNode(object):
                     # Indices 2, 3, 4 of accelerometer correspond to x, y, and z direction respectively
                     self.accelPub.publish(Float32MultiArray(data=accelerometer[2:5]))
             except Exception as err:
-                print "failed to get accelerometer!", err
+                print("failed to get accelerometer!", err)
 
             if len(scan.ranges):
                 self.scanPub.publish(scan)
