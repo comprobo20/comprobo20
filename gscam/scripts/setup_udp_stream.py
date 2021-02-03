@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import socket
@@ -18,11 +18,12 @@ port = 10003
 size = 1024
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((host,port))
-s.send(str(receive_port) + "," + str(video_mode) +"\n")
+video_mode_str = str(receive_port) + "," + str(video_mode) +"\n"
+s.send(video_mode_str.encode())
 all_data = ""
 while not all_data.endswith('\n'):
 	data = s.recv(size)
 	all_data += data
 s.close()
 system('hping3 -c 1 -2 -s ' + str(receive_port) + ' -p ' + all_data.strip() + ' ' + host)
-print 'Received:', all_data
+print('Received:', all_data)
