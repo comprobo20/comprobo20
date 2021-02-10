@@ -23,7 +23,7 @@ s.send(video_mode_str.encode())
 all_data = ""
 while not all_data.endswith('\n'):
 	data = s.recv(size)
-	all_data += data
+	all_data += data.decode('utf-8')
 s.close()
 system('hping3 -c 1 -2 -s ' + str(receive_port) + ' -p ' + all_data.strip() + ' ' + host)
 print('Received:', all_data)
